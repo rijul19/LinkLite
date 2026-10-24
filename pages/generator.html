@@ -1,0 +1,49 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LinkLite | URL Generator</title>
+    <link rel="stylesheet" href="../css/style.css">
+    <link rel="stylesheet" href="../css/generator.css">
+    <script src="../js/validation.js" defer></script>
+</head>
+<body>
+    <main class="generator-container">
+        <section class="generator-card">
+            <p class="eyebrow">LINKLITE URL SHORTENER</p>
+
+            <h1>Make your links lighter.</h1>
+
+            <p class="description">
+                Paste your long URL below to get started.
+            </p>
+
+            <form id="urlForm" novalidate>
+                <label for="originalUrl">Enter your long URL</label>
+
+                <input
+                    type="text"
+                    id="originalUrl"
+                    name="originalUrl"
+                    placeholder="https://example.com/your-long-link"
+                    autocomplete="url"
+                    aria-describedby="formMessage"
+                >
+
+                <button type="submit" id="shortenBtn">
+                    Validate URL
+                </button>
+
+                <p
+                    id="formMessage"
+                    class="form-message"
+                    role="status"
+                    aria-live="polite"
+                ></p>
+            </form>
+        </section>
+    </main>
+</body>
+</html>
