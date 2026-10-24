@@ -1,0 +1,126 @@
+
+/* ===== Generator Page ===== */
+
+.generator-container {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 30px 20px;
+    background: linear-gradient(135deg, #eef2ff, #f5f3ff, #ecfeff);
+    font-family: Arial, sans-serif;
+}
+
+.generator-card {
+    width: 100%;
+    max-width: 600px;
+    padding: 40px;
+    background-color: #ffffff;
+    border: 1px solid #e5e7eb;
+    border-radius: 20px;
+    box-shadow: 0 15px 45px rgba(31, 41, 55, 0.10);
+}
+
+.eyebrow {
+    margin-bottom: 14px;
+    color: #6366f1;
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 2px;
+}
+
+.generator-card h1 {
+    margin: 0 0 14px;
+    color: #1f2937;
+    font-size: clamp(28px, 5vw, 40px);
+    line-height: 1.2;
+}
+
+.description {
+    margin-bottom: 30px;
+    color: #6b7280;
+    font-size: 16px;
+    line-height: 1.6;
+}
+
+#urlForm {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+#urlForm label {
+    color: #374151;
+    font-size: 14px;
+    font-weight: 600;
+}
+
+#originalUrl {
+    width: 100%;
+    padding: 15px 16px;
+    border: 1px solid #d1d5db;
+    border-radius: 10px;
+    background-color: #ffffff;
+    color: #111827;
+    font-size: 15px;
+    outline: none;
+    transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+#originalUrl:focus {
+    border-color: #6366f1;
+    box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.15);
+}
+
+#shortenBtn {
+    padding: 15px 20px;
+    border: none;
+    border-radius: 10px;
+    background-color: #4f46e5;
+    color: #ffffff;
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background-color 0.2s, transform 0.2s;
+}
+
+#shortenBtn:hover {
+    background-color: #4338ca;
+}
+
+#shortenBtn:active {
+    transform: scale(0.98);
+}
+
+.form-message {
+    min-height: 24px;
+    margin: 4px 0 0;
+    font-size: 14px;
+    line-height: 1.5;
+    overflow-wrap: anywhere;
+}
+
+.form-message.error {
+    color: #dc2626;
+}
+
+.form-message.success {
+    color: #15803d;
+}
+
+/* Mobile responsiveness */
+
+@media (max-width: 480px) {
+    .generator-container {
+        padding: 20px 14px;
+    }
+
+    .generator-card {
+        padding: 26px 20px;
+        border-radius: 16px;
+    }
+
+    .description {
+        font-size: 14px;
+    }
+}
