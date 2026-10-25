@@ -4,16 +4,33 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
     <title>LinkLite | URL Generator</title>
+
     <link rel="stylesheet" href="../css/style.css">
     <link rel="stylesheet" href="../css/generator.css">
+
     <script src="../js/validation.js" defer></script>
     <script src="../js/history.js" defer></script>
     <script src="../js/generator.js" defer></script>
 </head>
 <body>
+
+    <!-- Navigation Bar -->
+    <header class="site-header">
+        <a href="../index.html" class="site-logo">LINKLITE</a>
+
+        <nav class="site-nav" aria-label="Main navigation">
+            <a href="../index.html">Home</a>
+            <a href="history.html">History</a>
+            <a href="../index.html#about">About</a>
+        </nav>
+    </header>
+
+    <!-- URL Generator -->
     <main class="generator-container">
         <section class="generator-card">
+
             <p class="eyebrow">LINKLITE URL SHORTENER</p>
 
             <h1>Make your links lighter.</h1>
@@ -45,8 +62,13 @@
                     aria-live="polite"
                 ></p>
             </form>
-            <a href="history.html">View link history</a>
+
+            <a class="history-link" href="history.html">
+                View link history
+            </a>
+
         </section>
     </main>
+
 </body>
 </html>
