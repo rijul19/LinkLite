@@ -4,6 +4,7 @@ const originalUrlInput = document.getElementById("originalUrl");
 const formMessage = document.getElementById("formMessage");
 
 function showMessage(message, type) {
+    if (!formMessage) return;
     formMessage.textContent = message;
     formMessage.className = "form-message " + type;
 }
@@ -63,36 +64,38 @@ function validateURL(input) {
     };
 }
 
-urlForm.addEventListener("submit", function (event) {
-    event.preventDefault();
+if (urlForm && originalUrlInput) {
+    urlForm.addEventListener("submit", function (event) {
+        event.preventDefault();
 
-    const userInput = originalUrlInput.value;
-    const result = validateURL(userInput);
+        const userInput = originalUrlInput.value;
+        const result = validateURL(userInput);
 
-    if (!result.valid) {
-        showMessage(result.message, "error");
-        originalUrlInput.focus();
-        return;
-    }
+        if (!result.valid) {
+            showMessage(result.message, "error");
+            originalUrlInput.focus();
+            return;
+        }
 
-    originalUrlInput.value = result.normalizedURL;
+        originalUrlInput.value = result.normalizedURL;
 
-    showMessage(
-        "URL is valid! Ready for short-link generation.",
-        "success"
-    );
+        showMessage(
+            "URL is valid! Ready for short-link generation.",
+            "success"
+        );
 
-    // Notify the generator module when the URL is valid.
-    // Tishya's module can listen for this event later.
-    urlForm.dispatchEvent(
-        new CustomEvent("urlValidated", {
-            bubbles: true,
-            detail: {
-                originalUrl: result.normalizedURL
-            }
-        })
-    );
-});
+        // Notify the generator module when the URL is valid.
+        // Tishya's module can listen for this event later.
+        urlForm.dispatchEvent(
+            new CustomEvent("urlValidated", {
+                bubbles: true,
+                detail: {
+                    originalUrl: result.normalizedURL
+                }
+            })
+        );
+    });
+}
 
 // Clear the old message when the user edits the input.
 originalUrlInput.addEventListener("input", function () {
