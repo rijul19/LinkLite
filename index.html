@@ -4,7 +4,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="theme-color" content="#F5F2E8">
+  <meta name="theme-color" content="#F8F9FF">
   <title>LinkLite — Make your links lighter</title>
   <link rel="icon" type="image/png" href="icon.png">
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -13,9 +13,7 @@
     href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Playfair+Display:wght@400;500;600&display=swap"
     rel="stylesheet">
   <link rel="stylesheet" href="css/style.css">
-  <script src="js/validation.js" defer></script>
   <script src="js/history.js" defer></script>
-  <script src="js/generator.js" defer></script>
   <script src="js/statistics.js" defer></script>
   <script src="js/main.js" defer></script>
 </head>
@@ -26,7 +24,6 @@
           class="logo-period">.</span></span></a>
     <nav class="site-nav" aria-label="Main navigation">
       <a class="active" href="index.html">Home</a>
-      <a href="pages/generator.html">Shorten a link</a>
       <a href="pages/history.html">History</a>
     </nav>
     <a class="header-cta" href="pages/generator.html">Get started <span aria-hidden="true">↗</span></a>
@@ -39,15 +36,8 @@
         <h1>Make your links<br><em>lighter.</em></h1>
         <p class="hero-description">Long URLs, meet a simpler life. Create neat demo short links and keep your saved
           links together in one calm, clutter-free space.</p>
-        <form id="urlForm" class="hero-form" novalidate>
-          <label for="originalUrl">Your long URL</label>
-          <div class="hero-input-row">
-            <input type="url" id="originalUrl" name="originalUrl" placeholder="https://example.com/your-long-link"
-              autocomplete="url" aria-describedby="formMessage" required>
-            <button type="submit" id="shortenBtn">Shorten link <span aria-hidden="true">↗</span></button>
-          </div>
-          <p id="formMessage" class="form-message" role="status" aria-live="polite"></p>
-        </form>
+        <div class="hero-actions"><a class="hero-try-button" href="pages/generator.html">Try Generator <span
+              aria-hidden="true">↗</span></a></div>
         <p class="hero-note"><span aria-hidden="true">✳</span> Free to try · Saved in this browser · No account needed
         </p>
       </div>

@@ -1,6 +1,6 @@
-
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -14,19 +14,20 @@
     <script src="../js/history.js" defer></script>
     <script src="../js/generator.js" defer></script>
 </head>
+
 <body>
 
     <!-- Navigation Bar -->
     <header class="site-header">
         <a href="../index.html" class="site-logo">
-    <img src="../icon.png" alt="LinkLite Logo">
-    <span>LINKLITE</span>
-</a>
+            <img src="../icon.png" alt="LinkLite Logo">
+            <span>LINKLITE</span>
+        </a>
 
         <nav class="site-nav" aria-label="Main navigation">
             <a href="generator.html">Home</a>
             <a href="history.html">History</a>
-         
+
         </nav>
     </header>
 
@@ -34,7 +35,7 @@
     <main class="generator-container">
         <section class="generator-card">
 
-          
+
 
             <h1>Make your links lighter.</h1>
 
@@ -45,25 +46,14 @@
             <form id="urlForm" novalidate>
                 <label for="originalUrl">Enter your long URL</label>
 
-                <input
-                    type="text"
-                    id="originalUrl"
-                    name="originalUrl"
-                    placeholder="https://example.com/your-long-link"
-                    autocomplete="url"
-                    aria-describedby="formMessage"
-                >
+                <input type="text" id="originalUrl" name="originalUrl" placeholder="https://example.com/your-long-link"
+                    autocomplete="url" aria-describedby="formMessage">
 
                 <button type="submit" id="shortenBtn">
                     Validate URL
                 </button>
 
-                <p
-                    id="formMessage"
-                    class="form-message"
-                    role="status"
-                    aria-live="polite"
-                ></p>
+                <p id="formMessage" class="form-message" role="status" aria-live="polite"></p>
             </form>
 
             <a class="history-link" href="history.html">
@@ -74,4 +64,5 @@
     </main>
 
 </body>
+
 </html>
