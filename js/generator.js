@@ -27,10 +27,19 @@ function generateShortCode(length = 6) {
 function generateShortURL(originalURL) {
     const shortCode = generateShortCode();
 
+    const homepageURL = new URL(
+        window.location.pathname.includes("/pages/")
+            ? "../index.html"
+            : "index.html",
+        window.location.href
+    );
+
+    homepageURL.hash = "demo-" + shortCode;
+
     return {
         originalURL: originalURL,
         shortCode: shortCode,
-        shortURL: `https://linklite.demo/${shortCode}`
+        shortURL: homepageURL.href
     };
 }
 
