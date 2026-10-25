@@ -141,5 +141,3 @@ LinkLite/
 - Improved link validation and error handling
 - Enhanced accessibility and responsive design
 ---
-
-**Built with ❤️ using HTML, CSS, and JavaScript.**
