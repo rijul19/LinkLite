@@ -66,6 +66,41 @@ function resolveShortLink() {
   }
 }
 
+document.addEventListener("DOMContentLoaded", function () {
+  const form = document.getElementById("urlForm");
+  const input = document.getElementById("originalUrl");
+  const message = document.getElementById("formMessage");
+
+  if (!form || !input) return;
+
+  form.addEventListener("submit", function (event) {
+    event.preventDefault();
+
+    const url = input.value.trim();
+
+    if (!url) return;
+
+    // Send the URL through the existing validation logic.
+    const generatorForm = document.getElementById("generatorForm");
+
+    if (generatorForm) {
+      const generatorInput = document.getElementById("urlInput");
+
+      if (generatorInput) {
+        generatorInput.value = url;
+        generatorForm.requestSubmit();
+        return;
+      }
+    }
+
+    // If validation exposes a reusable function, connect it here.
+    if (message) {
+      message.textContent =
+        "Please use Get Started to generate this link.";
+    }
+  });
+});
+
 document.addEventListener("DOMContentLoaded", resolveShortLink);
 document.addEventListener("DOMContentLoaded", function () { renderRecentLinks(); resolveDemoLink(); });
 document.addEventListener("historyChanged", renderRecentLinks);

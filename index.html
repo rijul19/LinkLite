@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -8,15 +9,21 @@
   <link rel="icon" type="image/png" href="icon.png">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Playfair+Display:wght@400;500;600&display=swap" rel="stylesheet">
+  <link
+    href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Playfair+Display:wght@400;500;600&display=swap"
+    rel="stylesheet">
   <link rel="stylesheet" href="css/style.css">
+  <script src="js/validation.js" defer></script>
   <script src="js/history.js" defer></script>
+  <script src="js/generator.js" defer></script>
   <script src="js/statistics.js" defer></script>
   <script src="js/main.js" defer></script>
 </head>
+
 <body>
   <header class="site-header">
-    <a href="index.html" class="site-logo" aria-label="LinkLite home"><img src="icon.png" alt=""><span>LINKLITE<span class="logo-period">.</span></span></a>
+    <a href="index.html" class="site-logo" aria-label="LinkLite home"><img src="icon.png" alt=""><span>LINKLITE<span
+          class="logo-period">.</span></span></a>
     <nav class="site-nav" aria-label="Main navigation">
       <a class="active" href="index.html">Home</a>
       <a href="pages/generator.html">Shorten a link</a>
@@ -30,49 +37,103 @@
       <div class="hero-copy">
         <p class="eyebrow"><span class="eyebrow-dot"></span> A SMALL TOOL FOR BIG LINKS</p>
         <h1>Make your links<br><em>lighter.</em></h1>
-        <p class="hero-description">Long URLs, meet a simpler life. Create neat demo short links and keep your saved links together in one calm, clutter-free space.</p>
+        <p class="hero-description">Long URLs, meet a simpler life. Create neat demo short links and keep your saved
+          links together in one calm, clutter-free space.</p>
         <form id="urlForm" class="hero-form" novalidate>
           <label for="originalUrl">Your long URL</label>
           <div class="hero-input-row">
-            <input type="text" id="originalUrl" name="originalUrl" placeholder="https://example.com/your-long-link" autocomplete="url" aria-describedby="formMessage">
+            <input type="url" id="originalUrl" name="originalUrl" placeholder="https://example.com/your-long-link"
+              autocomplete="url" aria-describedby="formMessage" required>
             <button type="submit" id="shortenBtn">Shorten link <span aria-hidden="true">↗</span></button>
           </div>
           <p id="formMessage" class="form-message" role="status" aria-live="polite"></p>
         </form>
-        <p class="hero-note"><span aria-hidden="true">✳</span> Free to try · Saved in this browser · No account needed</p>
+        <p class="hero-note"><span aria-hidden="true">✳</span> Free to try · Saved in this browser · No account needed
+        </p>
       </div>
       <div class="hero-art" aria-label="Illustration of a long link becoming a shorter link">
-        <div class="art-orbit orbit-one"></div><div class="art-orbit orbit-two"></div>
+        <div class="art-orbit orbit-one"></div>
+        <div class="art-orbit orbit-two"></div>
         <div class="art-label label-top">LESS LINK. MORE ROOM.</div>
-        <div class="link-paper paper-back"><span class="paper-dot"></span><span class="paper-line line-long"></span><span class="paper-line line-mid"></span></div>
-        <div class="link-paper paper-front"><div class="paper-heading"><span class="mini-link-icon">↗</span><span>YOUR NEW LINK</span><span class="paper-status">READY</span></div><div class="short-demo">linklite<span>.local</span>/<b>abc123</b></div><div class="paper-bottom"><span><i></i> Demo link created</span><span class="copy-glyph">▢</span></div></div>
+        <div class="link-paper paper-back"><span class="paper-dot"></span><span
+            class="paper-line line-long"></span><span class="paper-line line-mid"></span></div>
+        <div class="link-paper paper-front">
+          <div class="paper-heading"><span class="mini-link-icon">↗</span><span>YOUR NEW LINK</span><span
+              class="paper-status">READY</span></div>
+          <div class="short-demo">linklite<span>.local</span>/<b>abc123</b></div>
+          <div class="paper-bottom"><span><i></i> Demo link created</span><span class="copy-glyph">▢</span></div>
+        </div>
         <div class="art-stamp"><span>GOOD LINKS</span><strong>GOOD<br>THINGS</strong><span>START SMALL</span></div>
         <div class="art-label label-bottom">MADE TO KEEP THINGS SIMPLE <span>✳</span></div>
       </div>
     </section>
 
     <section class="feature-strip section-wrap" aria-label="LinkLite features">
-      <article class="feature-item"><span class="feature-symbol">01</span><div><h3>Simple by design</h3><p>Paste a URL and create a demo short link.</p></div></article>
-      <article class="feature-item"><span class="feature-symbol">02</span><div><h3>Your links, together</h3><p>Keep your saved links in one convenient place.</p></div></article>
-      <article class="feature-item"><span class="feature-symbol">03</span><div><h3>Saved locally</h3><p>Your browser remembers your demo history.</p></div></article>
+      <article class="feature-item"><span class="feature-symbol">01</span>
+        <div>
+          <h3>Simple by design</h3>
+          <p>Paste a URL and create a demo short link.</p>
+        </div>
+      </article>
+      <article class="feature-item"><span class="feature-symbol">02</span>
+        <div>
+          <h3>Your links, together</h3>
+          <p>Keep your saved links in one convenient place.</p>
+        </div>
+      </article>
+      <article class="feature-item"><span class="feature-symbol">03</span>
+        <div>
+          <h3>Saved locally</h3>
+          <p>Your browser remembers your demo history.</p>
+        </div>
+      </article>
     </section>
 
     <section class="stats-section section-wrap" aria-label="Link statistics">
-      <div class="section-heading"><div><p class="eyebrow">YOUR LITTLE LINK LIBRARY</p><h2>Everything, <em>at a glance.</em></h2></div><a href="pages/history.html" class="text-link">Explore history <span>↗</span></a></div>
+      <div class="section-heading">
+        <div>
+          <p class="eyebrow">YOUR LITTLE LINK LIBRARY</p>
+          <h2>Everything, <em>at a glance.</em></h2>
+        </div><a href="pages/history.html" class="text-link">Explore history <span>↗</span></a>
+      </div>
       <div class="stats-grid">
-        <article class="stat-card"><span class="stat-label">LINKS CREATED</span><strong id="totalLinks">0</strong><span class="stat-foot">Demo links saved here</span><span class="stat-decoration">↗</span></article>
-        <article class="stat-card stat-card-olive"><span class="stat-label">LINKS SAVED</span><strong id="savedLinks">0</strong><span class="stat-foot">In your browser history</span><span class="stat-decoration">▤</span></article>
-        <article class="stat-card stat-card-russet"><span class="stat-label">DEMO CLICKS</span><strong id="totalClicks">0</strong><span class="stat-foot">Clicks from history list</span><span class="stat-decoration">⌁</span></article>
+        <article class="stat-card"><span class="stat-label">LINKS CREATED</span><strong id="totalLinks">0</strong><span
+            class="stat-foot">Demo links saved here</span><span class="stat-decoration">↗</span></article>
+        <article class="stat-card stat-card-olive"><span class="stat-label">LINKS SAVED</span><strong
+            id="savedLinks">0</strong><span class="stat-foot">In your browser history</span><span
+            class="stat-decoration">▤</span></article>
+        <article class="stat-card stat-card-russet"><span class="stat-label">DEMO CLICKS</span><strong
+            id="totalClicks">0</strong><span class="stat-foot">Clicks from history list</span><span
+            class="stat-decoration">⌁</span></article>
       </div>
     </section>
 
     <section class="recent-section section-wrap">
-      <div class="section-heading"><div><p class="eyebrow">PICK UP WHERE YOU LEFT OFF</p><h2>Your recent <em>links.</em></h2></div><a href="pages/history.html" class="text-link">View all links <span>↗</span></a></div>
-      <div id="recentLinks" class="recent-links"><p class="empty-recent">Your next useful link belongs here.</p></div>
+      <div class="section-heading">
+        <div>
+          <p class="eyebrow">PICK UP WHERE YOU LEFT OFF</p>
+          <h2>Your recent <em>links.</em></h2>
+        </div><a href="pages/history.html" class="text-link">View all links <span>↗</span></a>
+      </div>
+      <div id="recentLinks" class="recent-links">
+        <p class="empty-recent">Your next useful link belongs here.</p>
+      </div>
     </section>
 
-    <section id="about" class="about-section section-wrap"><div class="about-mark">L<span>.</span></div><div><p class="eyebrow">A NOTE ABOUT THIS PROJECT</p><h2>Small, useful, <em>and intentionally simple.</em></h2><p>LinkLite is a front-end demonstration project. It validates URLs and stores demo link records in your browser. Real public short links and server-side redirects require a backend service; demo links work only in this browser while their saved records remain available.</p></div><a class="about-cta" href="pages/generator.html">Try the generator <span>↗</span></a></section>
+    <section id="about" class="about-section section-wrap">
+      <div class="about-mark">L<span>.</span></div>
+      <div>
+        <p class="eyebrow">A NOTE ABOUT THIS PROJECT</p>
+        <h2>Small, useful, <em>and intentionally simple.</em></h2>
+        <p>LinkLite is a front-end demonstration project. It validates URLs and stores demo link records in your
+          browser. Real public short links and server-side redirects require a backend service; demo links work only in
+          this browser while their saved records remain available.</p>
+      </div><a class="about-cta" href="pages/generator.html">Try the generator <span>↗</span></a>
+    </section>
   </main>
-  <footer class="site-footer section-wrap"><a href="index.html" class="footer-brand">LINKLITE<span>.</span></a><p>Make your links lighter.</p><span>FRONT-END DEMO · 2026</span></footer>
+  <footer class="site-footer section-wrap"><a href="index.html" class="footer-brand">LINKLITE<span>.</span></a>
+    <p>Make your links lighter.</p><span>FRONT-END DEMO · 2026</span>
+  </footer>
 </body>
+
 </html>
