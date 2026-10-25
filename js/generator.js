@@ -62,7 +62,7 @@ function displayShortURL(result) {
         generatorForm.appendChild(resultContainer);
     }
 
- 
+
     resultContainer.replaceChildren();
 
     const heading = document.createElement("h2");
@@ -71,11 +71,23 @@ function displayShortURL(result) {
     heading.style.color = "#1f2937";
     heading.style.margin = "0 0 12px";
 
+
     const shortURLText = document.createElement("p");
-    shortURLText.textContent = result.shortURL;
-    shortURLText.style.color = "#4f46e5";
-    shortURLText.style.fontWeight = "600";
     shortURLText.style.overflowWrap = "anywhere";
+    shortURLText.style.margin = "0 0 14px";
+
+    const shortURLLink = document.createElement("a");
+    shortURLLink.href = result.shortURL;
+    shortURLLink.textContent = result.shortURL;
+    shortURLLink.target = "_blank";
+    shortURLLink.rel = "noopener noreferrer";
+
+    shortURLLink.style.color = "#244C9A";
+    shortURLLink.style.fontWeight = "600";
+    shortURLLink.style.textDecoration = "underline";
+
+    shortURLText.appendChild(shortURLLink);
+
 
     const copyButton = document.createElement("button");
     copyButton.type = "button";
@@ -99,11 +111,12 @@ function displayShortURL(result) {
             }, 2000);
 
         } catch (error) {
-            
+
             copyButton.textContent = "Copy manually";
 
-            shortURLText.textContent =
-                "Select and copy this link: " + result.shortURL;
+            shortURLText.prepend(
+                document.createTextNode("Select and copy this link: ")
+            );
         }
     });
 
@@ -123,7 +136,7 @@ generatorForm.addEventListener("urlValidated", function (event) {
     displayShortURL(result);
     saveHistory(result);
 
-  
+
     generatorMessage.textContent =
         "Demo short link generated successfully!";
 
