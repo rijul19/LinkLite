@@ -1,84 +1,123 @@
 
-/* ===== LinkLite Navigation Bar ===== */
+/* ===== Global Styling ===== */
+
+* {
+    box-sizing: border-box;
+}
+
+body {
+    margin: 0;
+    font-family: 'Poppins', Arial, Helvetica, sans-serif;
+    color: #171b35;
+    background: #f4f2ff;
+}
+
+input,
+button,
+a {
+    font-family: inherit;
+}
+
+/* ===== Navigation Bar ===== */
 
 .site-header {
     width: 100%;
-    min-height: 76px;
-    padding: 16px 6%;
+    min-height: 70px;
+    padding: 12px 3%;
     display: flex;
     align-items: center;
     justify-content: space-between;
     gap: 20px;
     background-color: #ffffff;
-    border-bottom: 1px solid #e5e7eb;
-    box-sizing: border-box;
-    position: relative;
-    z-index: 10;
+    border-bottom: 1px solid #eeeafd;
 }
 
+/* ===== LinkLite Logo and Icon ===== */
+
 .site-logo {
-    color: #4338ca;
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    margin-right: auto;
+    color: #4935d5;
+    font-family: 'Poppins', sans-serif;
     font-size: 28px;
     font-weight: 800;
-    letter-spacing: 1px;
+    letter-spacing: 1.5px;
     text-decoration: none;
+    white-space: nowrap;
+    transition: color 0.2s;
 }
+
+.site-logo img {
+    display: block;
+    width: 40px;
+    height: 40px;
+    object-fit: contain;
+}
+
+.site-logo:hover {
+    color: #3520b4;
+}
+
+/* ===== Navigation Links ===== */
 
 .site-nav {
     display: flex;
     align-items: center;
+    justify-content: flex-end;
     gap: 12px;
 }
 
 .site-nav a {
-    padding: 10px 18px;
-    border-radius: 9px;
-    color: #374151;
+    padding: 10px 16px;
+    border-radius: 8px;
+    color: #20283a;
     font-size: 14px;
     font-weight: 600;
     text-decoration: none;
+    white-space: nowrap;
     transition: background-color 0.2s, color 0.2s;
 }
 
-.site-nav a:hover,
+.site-nav a:hover {
+    background-color: #f0edff;
+    color: #4935d5;
+}
+
 .site-nav a:focus-visible {
-    background-color: #eef2ff;
-    color: #4338ca;
-    outline: none;
+    outline: 2px solid #6955f5;
+    outline-offset: 3px;
 }
 
-.history-link {
-    display: inline-block;
-    margin-top: 20px;
-    color: #4338ca;
-    font-size: 14px;
-    font-weight: 600;
-    text-decoration: none;
-}
+/* ===== Mobile Responsive Design ===== */
 
-.history-link:hover {
-    text-decoration: underline;
-}
-
-/* Responsive navigation */
-
-@media (max-width: 480px) {
+@media (max-width: 600px) {
     .site-header {
-        padding: 14px 16px;
-        gap: 8px;
+        padding: 12px 16px;
         flex-wrap: wrap;
+        gap: 12px;
     }
 
     .site-logo {
         font-size: 23px;
+        letter-spacing: 1px;
+    }
+
+    .site-logo img {
+        width: 34px;
+        height: 34px;
     }
 
     .site-nav {
-        gap: 2px;
+        width: 100%;
+        justify-content: flex-start;
+        flex-wrap: wrap;
+        gap: 4px;
     }
 
     .site-nav a {
-        padding: 9px 10px;
-        font-size: 12px;
+        padding: 8px 10px;
+        font-size: 13px;
     }
 }
