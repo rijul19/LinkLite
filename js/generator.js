@@ -112,6 +112,7 @@ generatorForm.addEventListener("urlValidated", function (event) {
     const result = generateShortURL(originalURL);
 
     displayShortURL(result);
+    saveHistory(result);
 
   
     generatorMessage.textContent =
