@@ -27,13 +27,10 @@ function generateShortCode(length = 6) {
 function generateShortURL(originalURL) {
     const shortCode = generateShortCode();
 
-    const homepageURL = new URL(
-        window.location.pathname.includes("/pages/")
-            ? "../index.html"
-            : "index.html",
-        window.location.href
-    );
+    // Get the root directory of the project
+    const homepageURL = new URL("/", window.location.origin);
 
+    // Add the unique short code
     homepageURL.hash = "demo-" + shortCode;
 
     return {
@@ -42,6 +39,7 @@ function generateShortURL(originalURL) {
         shortURL: homepageURL.href
     };
 }
+
 
 
 
