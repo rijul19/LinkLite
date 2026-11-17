@@ -1,7 +1,10 @@
+
 const express = require("express");
 const cors = require("cors");
 const helmet = require("helmet");
 require("dotenv").config();
+
+const connectDB = require("./config/db");
 
 const urlRoutes = require("./routes/urlRoutes");
 const errorMiddleware = require("./middleware/errorMiddleware");
@@ -42,6 +45,18 @@ app.use(errorMiddleware);
 
 const PORT = process.env.PORT || 5000;
 
-app.listen(PORT, () => {
-    console.log(`LinkLite server running on port ${PORT}`);
-});
+// Connect to MongoDB before starting the server
+const startServer = async () => {
+    try {
+        await connectDB();
+
+        app.listen(PORT, () => {
+            console.log(`LinkLite server running on port ${PORT}`);
+        });
+    } catch (error) {
+        console.error("Failed to start server:", error.message);
+        process.exit(1);
+    }
+};
+
+startServer();

@@ -1,36 +1,36 @@
 
 const urlService = require("../services/urlService");
 
-const createUrl = (req, res) => {
+const validateUrl = (originalUrl) => {
+    if (!originalUrl || typeof originalUrl !== "string") {
+        return null;
+    }
+
     try {
-        const { originalUrl } = req.body;
-
-        if (!originalUrl || typeof originalUrl !== "string") {
-            return res.status(400).json({
-                success: false,
-                message: "Please provide a valid URL"
-            });
-        }
-
-        let parsedUrl;
-
-        try {
-            parsedUrl = new URL(originalUrl.trim());
-        } catch {
-            return res.status(400).json({
-                success: false,
-                message: "Invalid URL"
-            });
-        }
+        const parsedUrl = new URL(originalUrl.trim());
 
         if (!["http:", "https:"].includes(parsedUrl.protocol)) {
+            return null;
+        }
+
+        return parsedUrl.href;
+    } catch {
+        return null;
+    }
+};
+
+const createUrl = async (req, res, next) => {
+    try {
+        const validUrl = validateUrl(req.body.originalUrl);
+
+        if (!validUrl) {
             return res.status(400).json({
                 success: false,
-                message: "Only HTTP and HTTPS URLs are allowed"
+                message: "Please provide a valid HTTP or HTTPS URL"
             });
         }
 
-        const urlData = urlService.createShortUrl(parsedUrl.href);
+        const urlData = await urlService.createShortUrl(validUrl);
 
         const shortUrl = `${req.protocol}://${req.get("host")}/${urlData.shortCode}`;
 
@@ -43,100 +43,99 @@ const createUrl = (req, res) => {
             }
         });
     } catch (error) {
-        console.error("Create URL error:", error);
-
-        return res.status(500).json({
-            success: false,
-            message: "Server error"
-        });
+        next(error);
     }
 };
 
-const getUrls = (req, res) => {
-    res.status(200).json({
-        success: true,
-        data: urlService.getAllUrls()
-    });
-};
-
-const updateUrl = (req, res) => {
-    const { originalUrl } = req.body;
-
-    if (!originalUrl || typeof originalUrl !== "string") {
-        return res.status(400).json({
-            success: false,
-            message: "Please provide a valid URL"
-        });
-    }
-
-    let parsedUrl;
-
+const getUrls = async (req, res, next) => {
     try {
-        parsedUrl = new URL(originalUrl.trim());
-    } catch {
-        return res.status(400).json({
-            success: false,
-            message: "Invalid URL"
+        const urls = await urlService.getAllUrls();
+
+        return res.status(200).json({
+            success: true,
+            data: urls
         });
+    } catch (error) {
+        next(error);
     }
+};
 
-    if (!["http:", "https:"].includes(parsedUrl.protocol)) {
-        return res.status(400).json({
-            success: false,
-            message: "Only HTTP and HTTPS URLs are allowed"
-        });
-    }
+const updateUrl = async (req, res, next) => {
+    try {
+        const validUrl = validateUrl(req.body.originalUrl);
 
-    const updated = urlService.updateUrl(
-        req.params.code,
-        parsedUrl.href
-    );
-
-    if (!updated) {
-        return res.status(404).json({
-            success: false,
-            message: "Short URL not found"
-        });
-    }
-
-    const shortUrl = `${req.protocol}://${req.get("host")}/${updated.shortCode}`;
-
-    return res.status(200).json({
-        success: true,
-        message: "URL updated successfully",
-        data: {
-            ...updated,
-            shortUrl
+        if (!validUrl) {
+            return res.status(400).json({
+                success: false,
+                message: "Please provide a valid HTTP or HTTPS URL"
+            });
         }
-    });
-};
 
-const deleteUrl = (req, res) => {
-    const deleted = urlService.deleteUrl(req.params.code);
+        const updated = await urlService.updateUrl(
+            req.params.code,
+            validUrl
+        );
 
-    if (!deleted) {
-        return res.status(404).json({
-            success: false,
-            message: "Short URL not found"
+        if (!updated) {
+            return res.status(404).json({
+                success: false,
+                message: "Short URL not found"
+            });
+        }
+
+        const shortUrl = `${req.protocol}://${req.get("host")}/${updated.shortCode}`;
+
+        return res.status(200).json({
+            success: true,
+            message: "URL updated successfully",
+            data: {
+                ...updated,
+                shortUrl
+            }
         });
+    } catch (error) {
+        next(error);
     }
-
-    res.status(200).json({
-        success: true,
-        message: "URL deleted successfully"
-    });
 };
 
-const redirectUrl = (req, res) => {
-    const urlData = urlService.getUrlByCode(req.params.code);
+const deleteUrl = async (req, res, next) => {
+    try {
+        const deleted = await urlService.deleteUrl(req.params.code);
 
-    if (!urlData) {
-        return res.status(404).send("Short URL not found");
+        if (!deleted) {
+            return res.status(404).json({
+                success: false,
+                message: "Short URL not found"
+            });
+        }
+
+        return res.status(200).json({
+            success: true,
+            message: "URL deleted successfully"
+        });
+    } catch (error) {
+        next(error);
     }
+};
 
-    urlData.clicks++;
+const redirectUrl = async (req, res, next) => {
+    try {
+        const urlData = await urlService.getUrlByCode(req.params.code);
 
-    res.redirect(302, urlData.originalUrl);
+        if (!urlData) {
+            return res.status(404).send("Short URL not found");
+        }
+
+        // Increment clicks atomically in MongoDB
+        await require("../models/Url").updateOne(
+            { shortCode: req.params.code },
+            { $inc: { clicks: 1 } }
+        );
+
+        return res.redirect(302, urlData.originalUrl);
+    } catch (error) {
+        next(error);
+    }
 };
 
 module.exports = {

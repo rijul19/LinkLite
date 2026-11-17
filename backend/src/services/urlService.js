@@ -1,45 +1,50 @@
+
 const { nanoid } = require("nanoid");
+const Url = require("../models/Url");
 
-const urls = new Map();
-
-const createShortUrl = (originalUrl) => {
+// Create a new short URL
+const createShortUrl = async (originalUrl) => {
     const code = nanoid(7);
 
-    const urlData = {
+    const urlData = await Url.create({
         originalUrl,
         shortCode: code,
-        clicks: 0,
-        createdAt: new Date()
-    };
+        clicks: 0
+    });
 
-    urls.set(code, urlData);
-
-    return urlData;
+    return urlData.toObject();
 };
 
-const getAllUrls = () => {
-    return Array.from(urls.values());
+// Get all saved URLs
+const getAllUrls = async () => {
+    return await Url.find().sort({ createdAt: -1 }).lean();
 };
 
-const getUrlByCode = (code) => {
-    return urls.get(code);
+// Find URL using short code
+const getUrlByCode = async (code) => {
+    return await Url.findOne({ shortCode: code }).lean();
 };
 
-const deleteUrl = (code) => {
-    return urls.delete(code);
+// Delete URL
+const deleteUrl = async (code) => {
+    const deleted = await Url.findOneAndDelete({
+        shortCode: code
+    });
+
+    return deleted;
 };
-const updateUrl = (code, newUrl) => {
-    const existingUrl = urls.get(code);
 
-    if (!existingUrl) {
-        return null;
-    }
+// Update original URL
+const updateUrl = async (code, newUrl) => {
+    const updated = await Url.findOneAndUpdate(
+        { shortCode: code },
+        { originalUrl: newUrl },
+        { new: true, runValidators: true }
+    ).lean();
 
-    existingUrl.originalUrl = newUrl;
-    urls.set(code, existingUrl);
-
-    return existingUrl;
+    return updated;
 };
+
 module.exports = {
     createShortUrl,
     getAllUrls,
