@@ -1,38 +1,20 @@
 
 const urlService = require("../services/urlService");
+const Url = require("../models/Url");
+const logger = require("../utils/logger");
 
-const validateUrl = (originalUrl) => {
-    if (!originalUrl || typeof originalUrl !== "string") {
-        return null;
-    }
-
-    try {
-        const parsedUrl = new URL(originalUrl.trim());
-
-        if (!["http:", "https:"].includes(parsedUrl.protocol)) {
-            return null;
-        }
-
-        return parsedUrl.href;
-    } catch {
-        return null;
-    }
-};
-
+// Create a new short URL
 const createUrl = async (req, res, next) => {
     try {
-        const validUrl = validateUrl(req.body.originalUrl);
-
-        if (!validUrl) {
-            return res.status(400).json({
-                success: false,
-                message: "Please provide a valid HTTP or HTTPS URL"
-            });
-        }
+        const validUrl = req.validatedBody.originalUrl;
 
         const urlData = await urlService.createShortUrl(validUrl);
 
         const shortUrl = `${req.protocol}://${req.get("host")}/${urlData.shortCode}`;
+
+        logger.info(
+            `Short URL created: ${urlData.shortCode} -> ${validUrl}`
+        );
 
         return res.status(201).json({
             success: true,
@@ -47,29 +29,48 @@ const createUrl = async (req, res, next) => {
     }
 };
 
+// Get all URLs with pagination
 const getUrls = async (req, res, next) => {
     try {
-        const urls = await urlService.getAllUrls();
+        const { page, limit } = req.validatedQuery;
+
+        const result = await urlService.getAllUrls(page, limit);
 
         return res.status(200).json({
             success: true,
-            data: urls
+            data: result.urls,
+            pagination: result.pagination
         });
     } catch (error) {
         next(error);
     }
 };
 
-const updateUrl = async (req, res, next) => {
+// Get statistics for a short URL
+const getUrlStats = async (req, res, next) => {
     try {
-        const validUrl = validateUrl(req.body.originalUrl);
+        const stats = await urlService.getUrlStats(req.params.code);
 
-        if (!validUrl) {
-            return res.status(400).json({
+        if (!stats) {
+            return res.status(404).json({
                 success: false,
-                message: "Please provide a valid HTTP or HTTPS URL"
+                message: "Short URL not found"
             });
         }
+
+        return res.status(200).json({
+            success: true,
+            data: stats
+        });
+    } catch (error) {
+        next(error);
+    }
+};
+
+// Update an existing URL
+const updateUrl = async (req, res, next) => {
+    try {
+        const validUrl = req.validatedBody.originalUrl;
 
         const updated = await urlService.updateUrl(
             req.params.code,
@@ -85,6 +86,8 @@ const updateUrl = async (req, res, next) => {
 
         const shortUrl = `${req.protocol}://${req.get("host")}/${updated.shortCode}`;
 
+        logger.info(`URL updated: ${updated.shortCode}`);
+
         return res.status(200).json({
             success: true,
             message: "URL updated successfully",
@@ -98,6 +101,7 @@ const updateUrl = async (req, res, next) => {
     }
 };
 
+// Delete an existing URL
 const deleteUrl = async (req, res, next) => {
     try {
         const deleted = await urlService.deleteUrl(req.params.code);
@@ -109,6 +113,8 @@ const deleteUrl = async (req, res, next) => {
             });
         }
 
+        logger.info(`URL deleted: ${req.params.code}`);
+
         return res.status(200).json({
             success: true,
             message: "URL deleted successfully"
@@ -118,6 +124,7 @@ const deleteUrl = async (req, res, next) => {
     }
 };
 
+// Redirect short URL to original URL
 const redirectUrl = async (req, res, next) => {
     try {
         const urlData = await urlService.getUrlByCode(req.params.code);
@@ -127,10 +134,12 @@ const redirectUrl = async (req, res, next) => {
         }
 
         // Increment clicks atomically in MongoDB
-        await require("../models/Url").updateOne(
+        await Url.updateOne(
             { shortCode: req.params.code },
             { $inc: { clicks: 1 } }
         );
+
+        logger.info(`URL redirected: ${req.params.code}`);
 
         return res.redirect(302, urlData.originalUrl);
     } catch (error) {
@@ -143,5 +152,6 @@ module.exports = {
     getUrls,
     updateUrl,
     deleteUrl,
-    redirectUrl
+    redirectUrl,
+    getUrlStats
 };

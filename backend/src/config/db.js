@@ -1,4 +1,9 @@
 
+const dns = require("dns");
+
+// Use Google DNS for MongoDB SRV resolution
+dns.setServers(["8.8.8.8", "8.8.4.4"]);
+
 const mongoose = require("mongoose");
 
 const connectDB = async () => {
