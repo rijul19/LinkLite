@@ -6,17 +6,29 @@ const {
     createUrl,
     getUrls,
     updateUrl,
-    deleteUrl
+    deleteUrl,
+    getUrlStats
 } = require("../controllers/urlController");
 
-// Create a short URL
-router.post("/", createUrl);
+const validateRequest = require("../middleware/validateRequest");
+const { createUrlLimiter } = require("../middleware/rateLimitMiddleware");
 
-// Get all URLs
-router.get("/", getUrls);
+const {
+    urlSchema,
+    paginationSchema
+} = require("../validation/urlValidation");
+
+// Create a short URL
+router.post("/", createUrlLimiter, validateRequest(urlSchema), createUrl);
+
+// Get all URLs with pagination
+router.get("/", validateRequest(paginationSchema, "query"), getUrls);
+
+// Get statistics for a short URL
+router.get("/:code/stats", getUrlStats);
 
 // Update an existing URL
-router.put("/:code", updateUrl);
+router.put("/:code", validateRequest(urlSchema), updateUrl);
 
 // Delete a URL
 router.delete("/:code", deleteUrl);
