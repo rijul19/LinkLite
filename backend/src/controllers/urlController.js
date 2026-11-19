@@ -3,18 +3,17 @@ const urlService = require("../services/urlService");
 const Url = require("../models/Url");
 const logger = require("../utils/logger");
 
-// Create a new short URL
+// Create a new short URL (guest or logged-in user)
 const createUrl = async (req, res, next) => {
     try {
         const validUrl = req.validatedBody.originalUrl;
+        const userId = req.user ? req.user._id : null;
 
-        const urlData = await urlService.createShortUrl(validUrl);
+        const urlData = await urlService.createShortUrl(validUrl, userId);
 
         const shortUrl = `${req.protocol}://${req.get("host")}/${urlData.shortCode}`;
 
-        logger.info(
-            `Short URL created: ${urlData.shortCode} -> ${validUrl}`
-        );
+        logger.info(`Short URL created: ${urlData.shortCode} -> ${validUrl}`);
 
         return res.status(201).json({
             success: true,
@@ -29,12 +28,16 @@ const createUrl = async (req, res, next) => {
     }
 };
 
-// Get all URLs with pagination
+// Get logged-in user's URLs with pagination
 const getUrls = async (req, res, next) => {
     try {
         const { page, limit } = req.validatedQuery;
 
-        const result = await urlService.getAllUrls(page, limit);
+        const result = await urlService.getAllUrls(
+            req.user._id,
+            page,
+            limit
+        );
 
         return res.status(200).json({
             success: true,
@@ -46,10 +49,13 @@ const getUrls = async (req, res, next) => {
     }
 };
 
-// Get statistics for a short URL
+// Get statistics for the logged-in user's URL
 const getUrlStats = async (req, res, next) => {
     try {
-        const stats = await urlService.getUrlStats(req.params.code);
+        const stats = await urlService.getUrlStats(
+            req.params.code,
+            req.user._id
+        );
 
         if (!stats) {
             return res.status(404).json({
@@ -67,14 +73,15 @@ const getUrlStats = async (req, res, next) => {
     }
 };
 
-// Update an existing URL
+// Update an existing URL owned by the logged-in user
 const updateUrl = async (req, res, next) => {
     try {
         const validUrl = req.validatedBody.originalUrl;
 
         const updated = await urlService.updateUrl(
             req.params.code,
-            validUrl
+            validUrl,
+            req.user._id
         );
 
         if (!updated) {
@@ -101,10 +108,13 @@ const updateUrl = async (req, res, next) => {
     }
 };
 
-// Delete an existing URL
+// Delete an existing URL owned by the logged-in user
 const deleteUrl = async (req, res, next) => {
     try {
-        const deleted = await urlService.deleteUrl(req.params.code);
+        const deleted = await urlService.deleteUrl(
+            req.params.code,
+            req.user._id
+        );
 
         if (!deleted) {
             return res.status(404).json({
@@ -124,7 +134,7 @@ const deleteUrl = async (req, res, next) => {
     }
 };
 
-// Redirect short URL to original URL
+// Redirect short URL to original URL (public)
 const redirectUrl = async (req, res, next) => {
     try {
         const urlData = await urlService.getUrlByCode(req.params.code);
@@ -133,7 +143,6 @@ const redirectUrl = async (req, res, next) => {
             return res.status(404).send("Short URL not found");
         }
 
-        // Increment clicks atomically in MongoDB
         await Url.updateOne(
             { shortCode: req.params.code },
             { $inc: { clicks: 1 } }
