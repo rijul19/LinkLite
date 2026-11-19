@@ -8,7 +8,7 @@ const generateShortCode = () => {
 };
 
 // Create a new short URL
-const createShortUrl = async (originalUrl) => {
+const createShortUrl = async (originalUrl, userId = null) => {
     let shortCode;
     let existingUrl;
 
@@ -19,24 +19,26 @@ const createShortUrl = async (originalUrl) => {
 
     const newUrl = await Url.create({
         originalUrl,
-        shortCode
+        shortCode,
+        user: userId
     });
 
     return newUrl.toObject();
 };
 
-// Get all saved URLs with pagination
-const getAllUrls = async (page = 1, limit = 10) => {
+// Get a user's URLs with pagination
+const getAllUrls = async (userId, page = 1, limit = 10) => {
     const skip = (page - 1) * limit;
+    const filter = { user: userId };
 
     const [urls, totalUrls] = await Promise.all([
-        Url.find()
+        Url.find(filter)
             .sort({ createdAt: -1 })
             .skip(skip)
             .limit(limit)
             .lean(),
 
-        Url.countDocuments()
+        Url.countDocuments(filter)
     ]);
 
     return {
@@ -50,15 +52,18 @@ const getAllUrls = async (page = 1, limit = 10) => {
     };
 };
 
-// Get URL using short code
+// Get URL using short code (public redirect)
 const getUrlByCode = async (code) => {
     return await Url.findOne({ shortCode: code }).lean();
 };
 
-// Update original URL
-const updateUrl = async (code, originalUrl) => {
+// Update original URL belonging to a user
+const updateUrl = async (code, originalUrl, userId) => {
     return await Url.findOneAndUpdate(
-        { shortCode: code },
+        {
+            shortCode: code,
+            user: userId
+        },
         { originalUrl },
         {
             new: true,
@@ -67,13 +72,20 @@ const updateUrl = async (code, originalUrl) => {
     ).lean();
 };
 
-// Delete URL
-const deleteUrl = async (code) => {
-    return await Url.findOneAndDelete({ shortCode: code });
+// Delete URL belonging to a user
+const deleteUrl = async (code, userId) => {
+    return await Url.findOneAndDelete({
+        shortCode: code,
+        user: userId
+    });
 };
-// Get statistics for a short URL
-const getUrlStats = async (code) => {
-    const url = await Url.findOne({ shortCode: code }).lean();
+
+// Get statistics for a user's short URL
+const getUrlStats = async (code, userId) => {
+    const url = await Url.findOne({
+        shortCode: code,
+        user: userId
+    }).lean();
 
     if (!url) {
         return null;
@@ -86,6 +98,7 @@ const getUrlStats = async (code) => {
         createdAt: url.createdAt
     };
 };
+
 module.exports = {
     createShortUrl,
     getAllUrls,

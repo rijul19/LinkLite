@@ -12,25 +12,39 @@ const {
 
 const validateRequest = require("../middleware/validateRequest");
 const { createUrlLimiter } = require("../middleware/rateLimitMiddleware");
+const { optionalAuth, protect } = require("../middleware/authMiddleware");
 
 const {
     urlSchema,
     paginationSchema
 } = require("../validation/urlValidation");
 
-// Create a short URL
-router.post("/", createUrlLimiter, validateRequest(urlSchema), createUrl);
+// Create a short URL (guests and logged-in users)
+router.post(
+    "/",
+    createUrlLimiter,
+    optionalAuth,
+    validateRequest(urlSchema),
+    createUrl
+);
 
-// Get all URLs with pagination
-router.get("/", validateRequest(paginationSchema, "query"), getUrls);
+// Get only the logged-in user's URLs
+router.get(
+    "/",
+    protect,
+    validateRequest(paginationSchema, "query"),
+    getUrls
+);
 
-// Get statistics for a short URL
-router.get("/:code/stats", getUrlStats);
+router.get("/:code/stats", protect, getUrlStats);
 
-// Update an existing URL
-router.put("/:code", validateRequest(urlSchema), updateUrl);
+router.put(
+    "/:code",
+    protect,
+    validateRequest(urlSchema),
+    updateUrl
+);
 
-// Delete a URL
-router.delete("/:code", deleteUrl);
+router.delete("/:code", protect, deleteUrl);
 
 module.exports = router;

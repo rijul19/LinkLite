@@ -7,6 +7,8 @@ require("dotenv").config();
 const connectDB = require("./config/db");
 
 const urlRoutes = require("./routes/urlRoutes");
+const authRoutes = require("./routes/authRoutes");
+
 const errorMiddleware = require("./middleware/errorMiddleware");
 const { redirectUrl } = require("./controllers/urlController");
 
@@ -26,6 +28,9 @@ app.get("/api/health", (req, res) => {
         message: "LinkLite Backend is working!"
     });
 });
+
+// Authentication routes
+app.use("/api/auth", authRoutes);
 
 // URL API routes
 app.use("/api/urls", urlRoutes);

@@ -37,6 +37,14 @@ const urlSchema = new mongoose.Schema(
                 validator: Number.isInteger,
                 message: "Clicks must be a whole number"
             }
+        },
+
+        // Optional relationship with User model
+        user: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: "User",
+            default: null,
+            index: true
         }
     },
     {
