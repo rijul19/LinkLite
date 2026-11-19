@@ -7,7 +7,9 @@ const {
     getUrls,
     updateUrl,
     deleteUrl,
-    getUrlStats
+    getUrlStats,
+    getMyUrlDetails,
+    getUrlSummary
 } = require("../controllers/urlController");
 
 const validateRequest = require("../middleware/validateRequest");
@@ -28,7 +30,13 @@ router.post(
     createUrl
 );
 
-// Get only the logged-in user's URLs
+// Database: virtual populate
+router.get("/my-details", protect, getMyUrlDetails);
+
+// Database: aggregation
+router.get("/summary", protect, getUrlSummary);
+
+// Get logged-in user's URLs with pagination
 router.get(
     "/",
     protect,

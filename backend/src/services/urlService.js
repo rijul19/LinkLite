@@ -1,6 +1,7 @@
 
 const crypto = require("crypto");
 const Url = require("../models/Url");
+const User = require("../models/User");
 
 // Generate a unique short code
 const generateShortCode = () => {
@@ -49,6 +50,60 @@ const getAllUrls = async (userId, page = 1, limit = 10) => {
             totalUrls,
             totalPages: Math.ceil(totalUrls / limit)
         }
+    };
+};
+
+// Get URLs using Mongoose virtual populate
+const getUserUrlsWithDetails = async (userId) => {
+    const user = await User.findById(userId)
+        .select("name email")
+        .populate({
+            path: "urls",
+            select: "originalUrl shortCode clicks createdAt",
+            options: {
+                sort: { createdAt: -1 }
+            }
+        });
+
+    if (!user) {
+        return null;
+    }
+
+    return user;
+};
+
+// Get URL usage summary using MongoDB aggregation
+const getUserUrlSummary = async (userId) => {
+    const summary = await Url.aggregate([
+        {
+            $match: {
+                user: userId
+            }
+        },
+        {
+            $group: {
+                _id: null,
+                totalUrls: { $sum: 1 },
+                totalClicks: { $sum: "$clicks" },
+                averageClicks: { $avg: "$clicks" }
+            }
+        },
+        {
+            $project: {
+                _id: 0,
+                totalUrls: 1,
+                totalClicks: 1,
+                averageClicks: {
+                    $round: ["$averageClicks", 2]
+                }
+            }
+        }
+    ]);
+
+    return summary[0] || {
+        totalUrls: 0,
+        totalClicks: 0,
+        averageClicks: 0
     };
 };
 
@@ -102,8 +157,10 @@ const getUrlStats = async (code, userId) => {
 module.exports = {
     createShortUrl,
     getAllUrls,
+    getUserUrlsWithDetails,
+    getUserUrlSummary,
     getUrlByCode,
-    updateUrl,
+     updateUrl,
     deleteUrl,
     getUrlStats
 };

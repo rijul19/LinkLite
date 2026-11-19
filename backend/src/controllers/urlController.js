@@ -9,11 +9,16 @@ const createUrl = async (req, res, next) => {
         const validUrl = req.validatedBody.originalUrl;
         const userId = req.user ? req.user._id : null;
 
-        const urlData = await urlService.createShortUrl(validUrl, userId);
+        const urlData = await urlService.createShortUrl(
+            validUrl,
+            userId
+        );
 
         const shortUrl = `${req.protocol}://${req.get("host")}/${urlData.shortCode}`;
 
-        logger.info(`Short URL created: ${urlData.shortCode} -> ${validUrl}`);
+        logger.info(
+            `Short URL created: ${urlData.shortCode} -> ${validUrl}`
+        );
 
         return res.status(201).json({
             success: true,
@@ -43,6 +48,45 @@ const getUrls = async (req, res, next) => {
             success: true,
             data: result.urls,
             pagination: result.pagination
+        });
+    } catch (error) {
+        next(error);
+    }
+};
+
+// Get logged-in user's URLs using Mongoose virtual populate
+const getMyUrlDetails = async (req, res, next) => {
+    try {
+        const user = await urlService.getUserUrlsWithDetails(
+            req.user._id
+        );
+
+        if (!user) {
+            return res.status(404).json({
+                success: false,
+                message: "User not found"
+            });
+        }
+
+        return res.status(200).json({
+            success: true,
+            data: user
+        });
+    } catch (error) {
+        next(error);
+    }
+};
+
+// Get logged-in user's URL summary using MongoDB aggregation
+const getUrlSummary = async (req, res, next) => {
+    try {
+        const summary = await urlService.getUserUrlSummary(
+            req.user._id
+        );
+
+        return res.status(200).json({
+            success: true,
+            data: summary
         });
     } catch (error) {
         next(error);
@@ -137,7 +181,9 @@ const deleteUrl = async (req, res, next) => {
 // Redirect short URL to original URL (public)
 const redirectUrl = async (req, res, next) => {
     try {
-        const urlData = await urlService.getUrlByCode(req.params.code);
+        const urlData = await urlService.getUrlByCode(
+            req.params.code
+        );
 
         if (!urlData) {
             return res.status(404).send("Short URL not found");
@@ -159,8 +205,10 @@ const redirectUrl = async (req, res, next) => {
 module.exports = {
     createUrl,
     getUrls,
+    getMyUrlDetails,
+    getUrlSummary,
+    getUrlStats,
     updateUrl,
     deleteUrl,
-    redirectUrl,
-    getUrlStats
+    redirectUrl
 };
