@@ -38,11 +38,23 @@ const userSchema = new mongoose.Schema(
         }
     },
     {
-        timestamps: true
+        timestamps: true,
+        toJSON: { virtuals: true },
+        toObject: { virtuals: true }
     }
 );
 
-// Hash password before saving
+// INDEXES
+userSchema.index({ role: 1 });
+
+// VIRTUAL RELATIONSHIP: Get URLs belonging to a user
+userSchema.virtual("urls", {
+    ref: "Url",
+    localField: "_id",
+    foreignField: "user"
+});
+
+// MIDDLEWARE: Hash password before saving
 userSchema.pre("save", async function () {
     if (!this.isModified("password")) {
         return;
@@ -52,9 +64,15 @@ userSchema.pre("save", async function () {
     this.password = await bcrypt.hash(this.password, salt);
 });
 
-// Compare entered password with stored hash
+// INSTANCE METHOD: Compare passwords
 userSchema.methods.comparePassword = async function (enteredPassword) {
     return bcrypt.compare(enteredPassword, this.password);
 };
 
+// STATIC METHOD: Find users by role
+userSchema.statics.findByRole = function (role) {
+    return this.find({ role }).select("-password");
+};
+
+// EXPORT MODEL
 module.exports = mongoose.model("User", userSchema);

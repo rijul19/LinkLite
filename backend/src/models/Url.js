@@ -40,6 +40,7 @@ const urlSchema = new mongoose.Schema(
         },
 
         // Optional relationship with User model
+        // null means the URL was created by a guest
         user: {
             type: mongoose.Schema.Types.ObjectId,
             ref: "User",
@@ -54,7 +55,10 @@ const urlSchema = new mongoose.Schema(
     }
 );
 
-// Mongoose Virtual: Generate short URL
+// Compound index for efficient user URL queries
+urlSchema.index({ user: 1, createdAt: -1 });
+
+// Virtual: Generate short URL
 urlSchema.virtual("shortUrl").get(function () {
     return `${process.env.BASE_URL}/${this.shortCode}`;
 });
