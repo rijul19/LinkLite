@@ -117,6 +117,40 @@ const getUrlStats = async (req, res, next) => {
     }
 };
 
+// Get click history and analytics for a user's URL
+const getUrlClicks = async (req, res, next) => {
+    try {
+        const days = Number(req.validatedQuery?.days ?? req.query.days ?? 30);
+
+        if (!Number.isInteger(days) || days < 1 || days > 90) {
+            return res.status(400).json({
+                success: false,
+                message: "Days must be between 1 and 90"
+            });
+        }
+
+        const analytics = await urlService.getUrlClickAnalytics(
+            req.params.code,
+            req.user._id,
+            days
+        );
+
+        if (!analytics) {
+            return res.status(404).json({
+                success: false,
+                message: "Short URL not found"
+            });
+        }
+
+        return res.status(200).json({
+            success: true,
+            data: analytics
+        });
+    } catch (error) {
+        next(error);
+    }
+};
+
 // Update an existing URL owned by the logged-in user
 const updateUrl = async (req, res, next) => {
     try {
@@ -189,10 +223,16 @@ const redirectUrl = async (req, res, next) => {
             return res.status(404).send("Short URL not found");
         }
 
+        // Increment total click count
         await Url.updateOne(
-            { shortCode: req.params.code },
+            { _id: urlData._id },
             { $inc: { clicks: 1 } }
         );
+
+        // Save individual click details
+        urlService.recordClick(urlData, req).catch(error => {
+            logger.error(`Click recording failed: ${error.message}`);
+        });
 
         logger.info(`URL redirected: ${req.params.code}`);
 
@@ -208,6 +248,7 @@ module.exports = {
     getMyUrlDetails,
     getUrlSummary,
     getUrlStats,
+    getUrlClicks,
     updateUrl,
     deleteUrl,
     redirectUrl

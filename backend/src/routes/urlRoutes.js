@@ -8,6 +8,7 @@ const {
     updateUrl,
     deleteUrl,
     getUrlStats,
+    getUrlClicks,
     getMyUrlDetails,
     getUrlSummary
 } = require("../controllers/urlController");
@@ -18,7 +19,8 @@ const { optionalAuth, protect } = require("../middleware/authMiddleware");
 
 const {
     urlSchema,
-    paginationSchema
+    paginationSchema,
+    clicksQuerySchema
 } = require("../validation/urlValidation");
 
 // Create a short URL (guests and logged-in users)
@@ -44,8 +46,18 @@ router.get(
     getUrls
 );
 
+// Get statistics for a specific URL
 router.get("/:code/stats", protect, getUrlStats);
 
+// Get click history and analytics for a specific URL
+router.get(
+    "/:code/clicks",
+    protect,
+    validateRequest(clicksQuerySchema, "query"),
+    getUrlClicks
+);
+
+// Update an existing URL
 router.put(
     "/:code",
     protect,
@@ -53,6 +65,7 @@ router.put(
     updateUrl
 );
 
+// Delete an existing URL
 router.delete("/:code", protect, deleteUrl);
 
 module.exports = router;

@@ -1,156 +1,250 @@
 
 const crypto = require("crypto");
+const mongoose = require("mongoose");
+
 const Url = require("../models/Url");
 const User = require("../models/User");
+const Click = require("../models/Click");
 
-// Generate a unique short code
-const generateShortCode = () => {
-    return crypto.randomBytes(5).toString("hex").slice(0, 7);
-};
-
-// Create a new short URL
+// Create a shortened URL
 const createShortUrl = async (originalUrl, userId = null) => {
-    let shortCode;
-    let existingUrl;
+    const shortCode = crypto.randomBytes(4).toString("hex").slice(0, 7);
 
-    do {
-        shortCode = generateShortCode();
-        existingUrl = await Url.findOne({ shortCode });
-    } while (existingUrl);
-
-    const newUrl = await Url.create({
+    const urlData = await Url.create({
         originalUrl,
         shortCode,
-        user: userId
+        user: userId || undefined
     });
 
-    return newUrl.toObject();
+    return urlData;
 };
 
-// Get a user's URLs with pagination
-const getAllUrls = async (userId, page = 1, limit = 10) => {
+// Get all URLs with pagination
+const getAllUrls = async (page = 1, limit = 10) => {
     const skip = (page - 1) * limit;
-    const filter = { user: userId };
 
-    const [urls, totalUrls] = await Promise.all([
-        Url.find(filter)
+    const [urls, total] = await Promise.all([
+        Url.find()
             .sort({ createdAt: -1 })
             .skip(skip)
-            .limit(limit)
-            .lean(),
+            .limit(limit),
 
-        Url.countDocuments(filter)
+        Url.countDocuments()
     ]);
 
     return {
         urls,
-        pagination: {
-            currentPage: page,
-            limit,
-            totalUrls,
-            totalPages: Math.ceil(totalUrls / limit)
-        }
+        total,
+        page,
+        limit,
+        totalPages: Math.ceil(total / limit)
     };
 };
 
-// Get URLs using Mongoose virtual populate
-const getUserUrlsWithDetails = async (userId) => {
-    const user = await User.findById(userId)
-        .select("name email")
-        .populate({
-            path: "urls",
-            select: "originalUrl shortCode clicks createdAt",
-            options: {
-                sort: { createdAt: -1 }
-            }
-        });
+// Get URLs belonging to a particular user
+const getUserUrlsWithDetails = async (userId, page = 1, limit = 10) => {
+    const skip = (page - 1) * limit;
+
+    const [urls, total] = await Promise.all([
+        Url.find({ user: userId })
+            .sort({ createdAt: -1 })
+            .skip(skip)
+            .limit(limit),
+
+        Url.countDocuments({ user: userId })
+    ]);
+
+    return {
+        urls,
+        total,
+        page,
+        limit,
+        totalPages: Math.ceil(total / limit)
+    };
+};
+
+// Get user details along with their URLs
+const getUserUrlSummary = async (userId) => {
+    const user = await User.findById(userId).populate({
+        path: "urls",
+        options: { sort: { createdAt: -1 } }
+    });
 
     if (!user) {
         return null;
     }
 
-    return user;
-};
+    const totalUrls = user.urls.length;
 
-// Get URL usage summary using MongoDB aggregation
-const getUserUrlSummary = async (userId) => {
-    const summary = await Url.aggregate([
-        {
-            $match: {
-                user: userId
-            }
-        },
-        {
-            $group: {
-                _id: null,
-                totalUrls: { $sum: 1 },
-                totalClicks: { $sum: "$clicks" },
-                averageClicks: { $avg: "$clicks" }
-            }
-        },
-        {
-            $project: {
-                _id: 0,
-                totalUrls: 1,
-                totalClicks: 1,
-                averageClicks: {
-                    $round: ["$averageClicks", 2]
-                }
-            }
-        }
-    ]);
+    const totalClicks = user.urls.reduce(
+        (total, url) => total + (url.clicks || 0),
+        0
+    );
 
-    return summary[0] || {
-        totalUrls: 0,
-        totalClicks: 0,
-        averageClicks: 0
+    const averageClicks =
+        totalUrls > 0 ? Number((totalClicks / totalUrls).toFixed(2)) : 0;
+
+    return {
+        user,
+        totalUrls,
+        totalClicks,
+        averageClicks
     };
 };
 
-// Get URL using short code (public redirect)
-const getUrlByCode = async (code) => {
-    return await Url.findOne({ shortCode: code }).lean();
+// Find a URL using its short code
+const getUrlByCode = async (shortCode) => {
+    return Url.findOne({ shortCode });
 };
 
-// Update original URL belonging to a user
-const updateUrl = async (code, originalUrl, userId) => {
-    return await Url.findOneAndUpdate(
+// Update a URL belonging to a particular user
+const updateUrl = async (shortCode, userId, originalUrl) => {
+    return Url.findOneAndUpdate(
         {
-            shortCode: code,
+            shortCode,
             user: userId
         },
-        { originalUrl },
+        {
+            originalUrl
+        },
         {
             new: true,
             runValidators: true
         }
-    ).lean();
+    );
 };
 
-// Delete URL belonging to a user
-const deleteUrl = async (code, userId) => {
-    return await Url.findOneAndDelete({
-        shortCode: code,
+// Delete a URL belonging to a particular user
+const deleteUrl = async (shortCode, userId) => {
+    const url = await Url.findOneAndDelete({
+        shortCode,
+        user: userId
+    });
+
+    if (url) {
+        await Click.deleteMany({ url: url._id });
+    }
+
+    return url;
+};
+
+// Get basic statistics for a URL
+const getUrlStats = async (shortCode, userId) => {
+    return Url.findOne({
+        shortCode,
         user: userId
     });
 };
 
-// Get statistics for a user's short URL
-const getUrlStats = async (code, userId) => {
-    const url = await Url.findOne({
-        shortCode: code,
-        user: userId
-    }).lean();
+// Record an individual click
+const recordClick = async (urlData, req) => {
+    const referrer = req.get("referer") || "Direct";
+    const userAgent = req.get("user-agent") || "Unknown";
 
-    if (!url) {
+    return Click.create({
+        url: urlData._id,
+        shortCode: urlData.shortCode,
+        referrer: referrer.slice(0, 500),
+        userAgent: userAgent.slice(0, 300)
+    });
+};
+
+// Get daily click analytics and top referrers
+const getUrlClickAnalytics = async (shortCode, userId, days = 30) => {
+    const urlData = await Url.findOne({
+        shortCode,
+        user: userId
+    });
+
+    if (!urlData) {
         return null;
     }
 
+    const startDate = new Date();
+    startDate.setUTCHours(0, 0, 0, 0);
+    startDate.setUTCDate(startDate.getUTCDate() - (days - 1));
+
+    const [dailyResults, referrerResults, totalInRange] =
+        await Promise.all([
+            Click.aggregate([
+                {
+                    $match: {
+                        url: urlData._id,
+                        createdAt: { $gte: startDate }
+                    }
+                },
+                {
+                    $group: {
+                        _id: {
+                            $dateToString: {
+                                format: "%Y-%m-%d",
+                                date: "$createdAt",
+                                timezone: "UTC"
+                            }
+                        },
+                        clicks: { $sum: 1 }
+                    }
+                },
+                { $sort: { _id: 1 } }
+            ]),
+
+            Click.aggregate([
+                {
+                    $match: {
+                        url: urlData._id,
+                        createdAt: { $gte: startDate },
+                        referrer: {
+                            $exists: true,
+                            $nin: [null, ""]
+                        }
+                    }
+                },
+                {
+                    $group: {
+                        _id: "$referrer",
+                        clicks: { $sum: 1 }
+                    }
+                },
+                { $sort: { clicks: -1 } },
+                { $limit: 5 }
+            ]),
+
+            Click.countDocuments({
+                url: urlData._id,
+                createdAt: { $gte: startDate }
+            })
+        ]);
+
+    // Fill dates with zero clicks when no clicks occurred
+    const daily = [];
+
+    for (let i = 0; i < days; i++) {
+        const date = new Date(startDate);
+        date.setUTCDate(startDate.getUTCDate() + i);
+
+        const dateString = date.toISOString().slice(0, 10);
+
+        const existingDay = dailyResults.find(
+            (item) => item._id === dateString
+        );
+
+        daily.push({
+            date: dateString,
+            clicks: existingDay ? existingDay.clicks : 0
+        });
+    }
+
+    const topReferrers = referrerResults.map((item) => ({
+        referrer: item._id,
+        clicks: item.clicks
+    }));
+
     return {
-        shortCode: url.shortCode,
-        originalUrl: url.originalUrl,
-        totalClicks: url.clicks,
-        createdAt: url.createdAt
+        shortCode,
+        days,
+        totalInRange,
+        daily,
+        topReferrers
     };
 };
 
@@ -160,7 +254,9 @@ module.exports = {
     getUserUrlsWithDetails,
     getUserUrlSummary,
     getUrlByCode,
-     updateUrl,
+    updateUrl,
     deleteUrl,
-    getUrlStats
+    getUrlStats,
+    recordClick,
+    getUrlClickAnalytics
 };
