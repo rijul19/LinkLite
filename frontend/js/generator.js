@@ -94,7 +94,7 @@ function displayShortURL(result) {
     copyButton.style.padding = "10px 16px";
     copyButton.style.border = "none";
     copyButton.style.borderRadius = "8px";
-    copyButton.style.backgroundColor = "#4f~46e5";
+    copyButton.style.backgroundColor = "#4f46e5";
     copyButton.style.color = "#ffffff";
     copyButton.style.cursor = "pointer";
 
