@@ -18,4 +18,17 @@ const paginationSchema = Joi.object({
     limit: Joi.number().integer().min(1).max(100).default(10)
 });
 
-module.exports = { urlSchema, paginationSchema };
+// Validate click analytics date range
+const clicksQuerySchema = Joi.object({
+    days: Joi.number()
+        .integer()
+        .min(1)
+        .max(90)
+        .default(30)
+});
+
+module.exports = {
+    urlSchema,
+    paginationSchema,
+    clicksQuerySchema
+};
