@@ -5,18 +5,50 @@ const mongoose = require("mongoose");
 const Url = require("../models/Url");
 const User = require("../models/User");
 const Click = require("../models/Click");
+const eventBus = require("../utils/eventBus");
 
-// Create a shortened URL
-const createShortUrl = async (originalUrl, userId = null) => {
-    const shortCode = crypto.randomBytes(4).toString("hex").slice(0, 7);
+// Create a shortened URL with collision handling
+const createShortUrl = async (
+    originalUrl,
+    userId = null,
+    expiresAt = null
+) => {
+    const maxAttempts = 5;
 
-    const urlData = await Url.create({
-        originalUrl,
-        shortCode,
-        user: userId || undefined
-    });
+    for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+        const shortCode = crypto
+            .randomBytes(5)
+            .toString("base64url")
+            .slice(0, 7);
 
-    return urlData;
+        try {
+            const urlData = await Url.create({
+                originalUrl,
+                shortCode,
+                user: userId || null,
+                expiresAt: expiresAt || null
+            });
+
+            eventBus.emit("url:created", {
+                shortCode: urlData.shortCode
+            });
+
+            return urlData;
+        } catch (error) {
+            const isDuplicateCode =
+                error.code === 11000 &&
+                (
+                    error.keyPattern?.shortCode ||
+                    error.keyValue?.shortCode
+                );
+
+            if (!isDuplicateCode || attempt === maxAttempts) {
+                throw error;
+            }
+        }
+    }
+
+    throw new Error("Unable to generate a unique short code");
 };
 
 // Get logged-in user's URLs with pagination
@@ -41,7 +73,7 @@ const getAllUrls = async (userId, page = 1, limit = 10) => {
     };
 };
 
-// Get user details along with their URLs using virtual populate
+// Get user details along with their URLs
 const getUserUrlsWithDetails = async (userId) => {
     return User.findById(userId).populate({
         path: "urls",
@@ -90,15 +122,24 @@ const getUrlByCode = async (shortCode) => {
 };
 
 // Update a URL belonging to a particular user
-const updateUrl = async (shortCode, originalUrl, userId) => {
+const updateUrl = async (
+    shortCode,
+    originalUrl,
+    userId,
+    expiresAt
+) => {
+    const updateData = { originalUrl };
+
+    if (expiresAt !== undefined) {
+        updateData.expiresAt = expiresAt || null;
+    }
+
     return Url.findOneAndUpdate(
         {
             shortCode,
             user: userId
         },
-        {
-            originalUrl
-        },
+        updateData,
         {
             new: true,
             runValidators: true
@@ -115,6 +156,10 @@ const deleteUrl = async (shortCode, userId) => {
 
     if (url) {
         await Click.deleteMany({ url: url._id });
+
+        eventBus.emit("url:deleted", {
+            shortCode: url.shortCode
+        });
     }
 
     return url;
@@ -133,16 +178,26 @@ const recordClick = async (urlData, req) => {
     const referrer = req.get("referer") || "Direct";
     const userAgent = req.get("user-agent") || "Unknown";
 
-    return Click.create({
+    const click = await Click.create({
         url: urlData._id,
         shortCode: urlData.shortCode,
         referrer: referrer.slice(0, 500),
         userAgent: userAgent.slice(0, 300)
     });
+
+    eventBus.emit("url:clicked", {
+        shortCode: urlData.shortCode
+    });
+
+    return click;
 };
 
 // Get daily click analytics and top referrers
-const getUrlClickAnalytics = async (shortCode, userId, days = 30) => {
+const getUrlClickAnalytics = async (
+    shortCode,
+    userId,
+    days = 30
+) => {
     const urlData = await Url.findOne({
         shortCode,
         user: userId
@@ -207,7 +262,6 @@ const getUrlClickAnalytics = async (shortCode, userId, days = 30) => {
             })
         ]);
 
-    // Fill dates with zero clicks when no clicks occurred
     const daily = [];
 
     for (let i = 0; i < days; i++) {
