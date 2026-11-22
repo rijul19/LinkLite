@@ -3,105 +3,41 @@ const generatorForm = document.getElementById("urlForm");
 const urlInput = document.getElementById("originalUrl");
 const generatorMessage = document.getElementById("formMessage");
 
+const API_URL = "http://localhost:5000/api/urls";
 
 let resultContainer = null;
 
-function generateShortCode(length = 6) {
-    const characters =
-        "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
-
-    let shortCode = "";
-
-    for (let i = 0; i < length; i++) {
-        const randomIndex = Math.floor(
-            Math.random() * characters.length
-        );
-
-        shortCode += characters[randomIndex];
-    }
-
-    return shortCode;
-}
-
-
-function generateShortURL(originalURL) {
-    const shortCode = generateShortCode();
-
-    // Get the root directory of the project
-    const homepageURL = new URL("/", window.location.origin);
-
-    // Add the unique short code
-    homepageURL.hash = "demo-" + shortCode;
-
-    return {
-        originalURL: originalURL,
-        shortCode: shortCode,
-        shortURL: homepageURL.href
-    };
-}
-
-
-
-
+// Display the real short URL
 function displayShortURL(result) {
-
     if (!resultContainer) {
         resultContainer = document.createElement("div");
-
         resultContainer.id = "shortUrlResult";
         resultContainer.className = "short-url-result";
-
-        resultContainer.style.marginTop = "20px";
-        resultContainer.style.padding = "18px";
-        resultContainer.style.border = "1px solid #d1d5db";
-        resultContainer.style.borderRadius = "12px";
-        resultContainer.style.backgroundColor = "#f9fafb";
-
         generatorForm.appendChild(resultContainer);
     }
-
 
     resultContainer.replaceChildren();
 
     const heading = document.createElement("h2");
-    heading.textContent = "Your demo short link is ready!";
-    heading.style.fontSize = "18px";
-    heading.style.color = "#1f2937";
-    heading.style.margin = "0 0 12px";
-
+    heading.textContent = "Your short link is ready!";
 
     const shortURLText = document.createElement("p");
-    shortURLText.style.overflowWrap = "anywhere";
-    shortURLText.style.margin = "0 0 14px";
-
     const shortURLLink = document.createElement("a");
+
     shortURLLink.href = result.shortURL;
     shortURLLink.textContent = result.shortURL;
     shortURLLink.target = "_blank";
     shortURLLink.rel = "noopener noreferrer";
 
-    shortURLLink.style.color = "#244C9A";
-    shortURLLink.style.fontWeight = "600";
-    shortURLLink.style.textDecoration = "underline";
-
     shortURLText.appendChild(shortURLLink);
-
 
     const copyButton = document.createElement("button");
     copyButton.type = "button";
     copyButton.textContent = "Copy Link";
 
-    copyButton.style.padding = "10px 16px";
-    copyButton.style.border = "none";
-    copyButton.style.borderRadius = "8px";
-    copyButton.style.backgroundColor = "#4f46e5";
-    copyButton.style.color = "#ffffff";
-    copyButton.style.cursor = "pointer";
-
     copyButton.addEventListener("click", async function () {
         try {
             await navigator.clipboard.writeText(result.shortURL);
-
             copyButton.textContent = "Copied!";
 
             setTimeout(function () {
@@ -109,48 +45,80 @@ function displayShortURL(result) {
             }, 2000);
 
         } catch (error) {
-
             copyButton.textContent = "Copy manually";
-
-            shortURLText.prepend(
-                document.createTextNode("Select and copy this link: ")
-            );
         }
     });
 
-
-    resultContainer.appendChild(heading);
-    resultContainer.appendChild(shortURLText);
-    resultContainer.appendChild(copyButton);
+    resultContainer.append(heading, shortURLText, copyButton);
 }
 
+// Listen for successful URL validation
+if (generatorForm) {
+    generatorForm.addEventListener("urlValidated", async function (event) {
+        const originalUrl = event.detail.originalUrl;
 
-generatorForm.addEventListener("urlValidated", function (event) {
+        generatorMessage.textContent = "Creating your short link...";
+        generatorMessage.className = "form-message success";
 
-    const originalURL = event.detail.originalUrl;
+        try {
+            const response = await fetch(API_URL, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({
+                    originalUrl: originalUrl
+                })
+            });
 
-    const result = generateShortURL(originalURL);
+            const result = await response.json();
 
-    displayShortURL(result);
-    saveHistory(result);
+            if (!response.ok || !result.success) {
+                throw new Error(result.message || "Unable to create short link.");
+            }
 
+            const urlData = result.data;
 
-    generatorMessage.textContent =
-        "Demo short link generated successfully!";
+            const savedResult = {
+                originalURL: urlData.originalUrl,
+                shortCode: urlData.shortCode,
+                shortURL: urlData.shortUrl,
+                clicks: urlData.clicks || 0,
+                createdAt: new Date().toLocaleDateString("en-IN", {
+                    day: "numeric",
+                    month: "short",
+                    year: "numeric"
+                })
+            };
 
-    generatorMessage.className = "form-message success";
+            displayShortURL(savedResult);
 
-    console.log("Original URL:", result.originalURL);
-    console.log("Short code:", result.shortCode);
-    console.log("Demo short URL:", result.shortURL);
-});
+            if (typeof saveHistory === "function") {
+                saveHistory(savedResult);
+            }
 
+            generatorMessage.textContent = "Short link created successfully!";
+            generatorMessage.className = "form-message success";
 
+            console.log("Short URL created:", savedResult);
 
+        } catch (error) {
+            console.error("URL generation error:", error);
 
-urlInput.addEventListener("input", function () {
-    if (resultContainer) {
-        resultContainer.remove();
-        resultContainer = null;
-    }
-});
+            generatorMessage.textContent =
+                error.message || "Something went wrong. Please try again.";
+
+            generatorMessage.className = "form-message error";
+        }
+    });
+}
+
+// Remove old result when user changes the URL
+if (urlInput) {
+    urlInput.addEventListener("input", function () {
+        if (resultContainer) {
+            resultContainer.remove();
+            resultContainer = null;
+        }
+    });
+}
