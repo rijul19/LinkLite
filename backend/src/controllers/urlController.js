@@ -10,14 +10,17 @@ const logger = require("../utils/logger");
 const createUrl = async (req, res, next) => {
     try {
         const validUrl = req.validatedBody.originalUrl;
+        const expiresAt = req.validatedBody.expiresAt ?? null;
         const userId = req.user ? req.user._id : null;
 
         const urlData = await urlService.createShortUrl(
             validUrl,
-            userId
+            userId,
+            expiresAt
         );
 
-        const shortUrl = `${req.protocol}://${req.get("host")}/${urlData.shortCode}`;
+        const shortUrl =
+            `${req.protocol}://${req.get("host")}/${urlData.shortCode}`;
 
         logger.info(
             `Short URL created: ${urlData.shortCode} -> ${validUrl}`
@@ -165,11 +168,13 @@ const getUrlClicks = async (req, res, next) => {
 const updateUrl = async (req, res, next) => {
     try {
         const validUrl = req.validatedBody.originalUrl;
+        const expiresAt = req.validatedBody.expiresAt;
 
         const updated = await urlService.updateUrl(
             req.params.code,
             validUrl,
-            req.user._id
+            req.user._id,
+            expiresAt
         );
 
         if (!updated) {
@@ -179,7 +184,8 @@ const updateUrl = async (req, res, next) => {
             });
         }
 
-        const shortUrl = `${req.protocol}://${req.get("host")}/${updated.shortCode}`;
+        const shortUrl =
+            `${req.protocol}://${req.get("host")}/${updated.shortCode}`;
 
         logger.info(`URL updated: ${updated.shortCode}`);
 
@@ -239,30 +245,33 @@ const exportUserUrls = async (req, res, next) => {
 
     try {
         res.setHeader("Content-Type", "text/csv; charset=utf-8");
+
         res.setHeader(
             "Content-Disposition",
             'attachment; filename="linklite-urls.csv"'
         );
 
-        const csvStream = Readable.from((async function* () {
-            yield Buffer.from(
-                "Original URL,Short Code,Clicks,Created At\n",
-                "utf8"
-            );
+        const csvStream = Readable.from(
+            (async function* () {
+                yield Buffer.from(
+                    "Original URL,Short Code,Clicks,Created At\n",
+                    "utf8"
+                );
 
-            for await (const url of cursor) {
-                const row = [
-                    url.originalUrl,
-                    url.shortCode,
-                    url.clicks,
-                    url.createdAt
-                        ? new Date(url.createdAt).toISOString()
-                        : ""
-                ].map(escapeCsv).join(",") + "\n";
+                for await (const url of cursor) {
+                    const row = [
+                        url.originalUrl,
+                        url.shortCode,
+                        url.clicks,
+                        url.createdAt
+                            ? new Date(url.createdAt).toISOString()
+                            : ""
+                    ].map(escapeCsv).join(",") + "\n";
 
-                yield Buffer.from(row, "utf8");
-            }
-        })());
+                    yield Buffer.from(row, "utf8");
+                }
+            })()
+        );
 
         await pipeline(csvStream, res);
     } catch (error) {
@@ -271,7 +280,9 @@ const exportUserUrls = async (req, res, next) => {
         }
 
         if (res.headersSent) {
-            logger.error(`URL CSV export failed: ${error.message}`);
+            logger.error(
+                `URL CSV export failed: ${error.message}`
+            );
             return;
         }
 
@@ -290,6 +301,17 @@ const redirectUrl = async (req, res, next) => {
             return res.status(404).send("Short URL not found");
         }
 
+        // Stop redirects for expired URLs
+        if (
+            urlData.expiresAt &&
+            urlData.expiresAt <= new Date()
+        ) {
+            return res.status(410).json({
+                success: false,
+                message: "This short URL has expired"
+            });
+        }
+
         // Increment total click count
         await Url.updateOne(
             { _id: urlData._id },
@@ -298,7 +320,9 @@ const redirectUrl = async (req, res, next) => {
 
         // Save individual click details
         urlService.recordClick(urlData, req).catch(error => {
-            logger.error(`Click recording failed: ${error.message}`);
+            logger.error(
+                `Click recording failed: ${error.message}`
+            );
         });
 
         logger.info(`URL redirected: ${req.params.code}`);
