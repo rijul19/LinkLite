@@ -16,6 +16,10 @@ const createUrl = async (req, res, next) => {
 
         const shortUrl = `${req.protocol}://${req.get("host")}/${urlData.shortCode}`;
 
+        const cleanUrlData = typeof urlData.toObject === "function"
+    ? urlData.toObject()
+    : urlData;
+
         logger.info(
             `Short URL created: ${urlData.shortCode} -> ${validUrl}`
         );
@@ -23,10 +27,15 @@ const createUrl = async (req, res, next) => {
         return res.status(201).json({
             success: true,
             message: "Short URL created successfully",
+            // data: {
+            //     ...urlData,
+            //     shortUrl
+            // }
+
             data: {
-                ...urlData,
-                shortUrl
-            }
+    ...cleanUrlData,
+    shortUrl
+}
         });
     } catch (error) {
         next(error);
