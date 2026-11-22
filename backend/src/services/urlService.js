@@ -19,30 +19,8 @@ const createShortUrl = async (originalUrl, userId = null) => {
     return urlData;
 };
 
-// Get all URLs with pagination
-const getAllUrls = async (page = 1, limit = 10) => {
-    const skip = (page - 1) * limit;
-
-    const [urls, total] = await Promise.all([
-        Url.find()
-            .sort({ createdAt: -1 })
-            .skip(skip)
-            .limit(limit),
-
-        Url.countDocuments()
-    ]);
-
-    return {
-        urls,
-        total,
-        page,
-        limit,
-        totalPages: Math.ceil(total / limit)
-    };
-};
-
-// Get URLs belonging to a particular user
-const getUserUrlsWithDetails = async (userId, page = 1, limit = 10) => {
+// Get logged-in user's URLs with pagination
+const getAllUrls = async (userId, page = 1, limit = 10) => {
     const skip = (page - 1) * limit;
 
     const [urls, total] = await Promise.all([
@@ -63,32 +41,46 @@ const getUserUrlsWithDetails = async (userId, page = 1, limit = 10) => {
     };
 };
 
-// Get user details along with their URLs
-const getUserUrlSummary = async (userId) => {
-    const user = await User.findById(userId).populate({
+// Get user details along with their URLs using virtual populate
+const getUserUrlsWithDetails = async (userId) => {
+    return User.findById(userId).populate({
         path: "urls",
         options: { sort: { createdAt: -1 } }
     });
+};
 
-    if (!user) {
-        return null;
+// Get user URL summary using aggregation
+const getUserUrlSummary = async (userId) => {
+    const result = await Url.aggregate([
+        {
+            $match: {
+                user: new mongoose.Types.ObjectId(userId)
+            }
+        },
+        {
+            $group: {
+                _id: null,
+                totalUrls: { $sum: 1 },
+                totalClicks: { $sum: "$clicks" },
+                averageClicks: { $avg: "$clicks" }
+            }
+        }
+    ]);
+
+    if (result.length === 0) {
+        return {
+            totalUrls: 0,
+            totalClicks: 0,
+            averageClicks: 0
+        };
     }
 
-    const totalUrls = user.urls.length;
-
-    const totalClicks = user.urls.reduce(
-        (total, url) => total + (url.clicks || 0),
-        0
-    );
-
-    const averageClicks =
-        totalUrls > 0 ? Number((totalClicks / totalUrls).toFixed(2)) : 0;
-
     return {
-        user,
-        totalUrls,
-        totalClicks,
-        averageClicks
+        totalUrls: result[0].totalUrls,
+        totalClicks: result[0].totalClicks,
+        averageClicks: Number(
+            (result[0].averageClicks || 0).toFixed(2)
+        )
     };
 };
 
@@ -98,7 +90,7 @@ const getUrlByCode = async (shortCode) => {
 };
 
 // Update a URL belonging to a particular user
-const updateUrl = async (shortCode, userId, originalUrl) => {
+const updateUrl = async (shortCode, originalUrl, userId) => {
     return Url.findOneAndUpdate(
         {
             shortCode,
@@ -248,6 +240,15 @@ const getUrlClickAnalytics = async (shortCode, userId, days = 30) => {
     };
 };
 
+// Get a cursor containing only the logged-in user's URLs
+const getUserUrlsCursor = (userId) => {
+    return Url.find({ user: userId })
+        .select("originalUrl shortCode clicks createdAt")
+        .sort({ createdAt: -1 })
+        .lean()
+        .cursor();
+};
+
 module.exports = {
     createShortUrl,
     getAllUrls,
@@ -258,5 +259,6 @@ module.exports = {
     deleteUrl,
     getUrlStats,
     recordClick,
-    getUrlClickAnalytics
+    getUrlClickAnalytics,
+    getUserUrlsCursor
 };

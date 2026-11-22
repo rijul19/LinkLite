@@ -10,7 +10,8 @@ const {
     getUrlStats,
     getUrlClicks,
     getMyUrlDetails,
-    getUrlSummary
+    getUrlSummary,
+    exportUserUrls
 } = require("../controllers/urlController");
 
 const validateRequest = require("../middleware/validateRequest");
@@ -31,6 +32,9 @@ router.post(
     validateRequest(urlSchema),
     createUrl
 );
+
+// Export logged-in user's URLs as CSV
+router.get("/export", protect, exportUserUrls);
 
 // Database: virtual populate
 router.get("/my-details", protect, getMyUrlDetails);
