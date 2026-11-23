@@ -1,8 +1,0 @@
-[2026-11-18T06:02:16.398Z] [INFO] LinkLite logger test successful
-[2026-11-18T06:02:16.400Z] [ERROR] This is a test error
-[2026-11-18T06:03:52.890Z] [INFO] LinkLite logger test successful
-[2026-11-18T06:03:52.891Z] [ERROR] This is a test error
-[2026-11-18T06:08:28.365Z] [ERROR] GET /test-error - This is a test error
-[2026-11-18T06:14:05.617Z] [ERROR] POST /api/urls - Cannot read properties of undefined (reading 'originalUrl')
-[2026-11-18T06:15:07.186Z] [INFO] Short URL created: 8fc59d2 -> https://www.google.com
-[2026-11-18T06:15:30.230Z] [INFO] URL redirected: 8fc59d2

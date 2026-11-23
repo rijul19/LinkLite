@@ -1,4 +1,7 @@
 
+const { Readable } = require("stream");
+const { pipeline } = require("stream/promises");
+
 const urlService = require("../services/urlService");
 const Url = require("../models/Url");
 const logger = require("../utils/logger");
@@ -7,18 +10,17 @@ const logger = require("../utils/logger");
 const createUrl = async (req, res, next) => {
     try {
         const validUrl = req.validatedBody.originalUrl;
+        const expiresAt = req.validatedBody.expiresAt ?? null;
         const userId = req.user ? req.user._id : null;
 
         const urlData = await urlService.createShortUrl(
             validUrl,
-            userId
+            userId,
+            expiresAt
         );
 
-        const shortUrl = `${req.protocol}://${req.get("host")}/${urlData.shortCode}`;
-
-        const cleanUrlData = typeof urlData.toObject === "function"
-    ? urlData.toObject()
-    : urlData;
+        const shortUrl =
+            `${req.protocol}://${req.get("host")}/${urlData.shortCode}`;
 
         logger.info(
             `Short URL created: ${urlData.shortCode} -> ${validUrl}`
@@ -27,15 +29,10 @@ const createUrl = async (req, res, next) => {
         return res.status(201).json({
             success: true,
             message: "Short URL created successfully",
-            // data: {
-            //     ...urlData,
-            //     shortUrl
-            // }
-
             data: {
-    ...cleanUrlData,
-    shortUrl
-}
+                ...urlData.toObject(),
+                shortUrl
+            }
         });
     } catch (error) {
         next(error);
@@ -56,7 +53,12 @@ const getUrls = async (req, res, next) => {
         return res.status(200).json({
             success: true,
             data: result.urls,
-            pagination: result.pagination
+            pagination: {
+                total: result.total,
+                page: result.page,
+                limit: result.limit,
+                totalPages: result.totalPages
+            }
         });
     } catch (error) {
         next(error);
@@ -86,7 +88,7 @@ const getMyUrlDetails = async (req, res, next) => {
     }
 };
 
-// Get logged-in user's URL summary using MongoDB aggregation
+// Get logged-in user's URL summary
 const getUrlSummary = async (req, res, next) => {
     try {
         const summary = await urlService.getUserUrlSummary(
@@ -129,7 +131,9 @@ const getUrlStats = async (req, res, next) => {
 // Get click history and analytics for a user's URL
 const getUrlClicks = async (req, res, next) => {
     try {
-        const days = Number(req.validatedQuery?.days ?? req.query.days ?? 30);
+        const days = Number(
+            req.validatedQuery?.days ?? req.query.days ?? 30
+        );
 
         if (!Number.isInteger(days) || days < 1 || days > 90) {
             return res.status(400).json({
@@ -164,11 +168,13 @@ const getUrlClicks = async (req, res, next) => {
 const updateUrl = async (req, res, next) => {
     try {
         const validUrl = req.validatedBody.originalUrl;
+        const expiresAt = req.validatedBody.expiresAt;
 
         const updated = await urlService.updateUrl(
             req.params.code,
             validUrl,
-            req.user._id
+            req.user._id,
+            expiresAt
         );
 
         if (!updated) {
@@ -178,7 +184,8 @@ const updateUrl = async (req, res, next) => {
             });
         }
 
-        const shortUrl = `${req.protocol}://${req.get("host")}/${updated.shortCode}`;
+        const shortUrl =
+            `${req.protocol}://${req.get("host")}/${updated.shortCode}`;
 
         logger.info(`URL updated: ${updated.shortCode}`);
 
@@ -186,7 +193,7 @@ const updateUrl = async (req, res, next) => {
             success: true,
             message: "URL updated successfully",
             data: {
-                ...updated,
+                ...updated.toObject(),
                 shortUrl
             }
         });
@@ -221,6 +228,68 @@ const deleteUrl = async (req, res, next) => {
     }
 };
 
+// Export the logged-in user's URLs as a CSV file
+const exportUserUrls = async (req, res, next) => {
+    const cursor = urlService.getUserUrlsCursor(req.user._id);
+
+    const escapeCsv = (value) => {
+        let text = String(value ?? "");
+
+        // Prevent spreadsheet formula injection
+        if (/^[=+\-@\t\r]/.test(text)) {
+            text = "'" + text;
+        }
+
+        return `"${text.replace(/"/g, '""')}"`;
+    };
+
+    try {
+        res.setHeader("Content-Type", "text/csv; charset=utf-8");
+
+        res.setHeader(
+            "Content-Disposition",
+            'attachment; filename="linklite-urls.csv"'
+        );
+
+        const csvStream = Readable.from(
+            (async function* () {
+                yield Buffer.from(
+                    "Original URL,Short Code,Clicks,Created At\n",
+                    "utf8"
+                );
+
+                for await (const url of cursor) {
+                    const row = [
+                        url.originalUrl,
+                        url.shortCode,
+                        url.clicks,
+                        url.createdAt
+                            ? new Date(url.createdAt).toISOString()
+                            : ""
+                    ].map(escapeCsv).join(",") + "\n";
+
+                    yield Buffer.from(row, "utf8");
+                }
+            })()
+        );
+
+        await pipeline(csvStream, res);
+    } catch (error) {
+        if (typeof cursor.close === "function") {
+            await cursor.close().catch(() => {});
+        }
+
+        if (res.headersSent) {
+            logger.error(
+                `URL CSV export failed: ${error.message}`
+            );
+            return;
+        }
+
+        next(error);
+    }
+};
+
 // Redirect short URL to original URL (public)
 const redirectUrl = async (req, res, next) => {
     try {
@@ -232,6 +301,17 @@ const redirectUrl = async (req, res, next) => {
             return res.status(404).send("Short URL not found");
         }
 
+        // Stop redirects for expired URLs
+        if (
+            urlData.expiresAt &&
+            urlData.expiresAt <= new Date()
+        ) {
+            return res.status(410).json({
+                success: false,
+                message: "This short URL has expired"
+            });
+        }
+
         // Increment total click count
         await Url.updateOne(
             { _id: urlData._id },
@@ -240,7 +320,9 @@ const redirectUrl = async (req, res, next) => {
 
         // Save individual click details
         urlService.recordClick(urlData, req).catch(error => {
-            logger.error(`Click recording failed: ${error.message}`);
+            logger.error(
+                `Click recording failed: ${error.message}`
+            );
         });
 
         logger.info(`URL redirected: ${req.params.code}`);
@@ -260,5 +342,6 @@ module.exports = {
     getUrlClicks,
     updateUrl,
     deleteUrl,
+    exportUserUrls,
     redirectUrl
 };

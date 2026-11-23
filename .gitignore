@@ -4,3 +4,8 @@ node_modules/
 
 backend/.env
 backend/node_modules/
+backend/reports/
+backend/uploads/
+.postman/
+backend/logs/
+backend/test-data/

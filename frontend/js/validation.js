@@ -98,7 +98,11 @@ if (urlForm && originalUrlInput) {
 }
 
 // Clear the old message when the user edits the input.
-originalUrlInput.addEventListener("input", function () {
-    formMessage.textContent = "";
-    formMessage.className = "form-message";
-});
+if (originalUrlInput) {
+    originalUrlInput.addEventListener("input", function () {
+        if (formMessage) {
+            formMessage.textContent = "";
+            formMessage.className = "form-message";
+        }
+    });
+}
