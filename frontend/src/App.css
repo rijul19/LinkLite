@@ -1,3 +1,66 @@
 /* React-specific refinements; the original LinkLite stylesheet supplies the main design. */
-.hero-try-button{cursor:pointer}.generator-card form{margin-top:26px}.generator-card form>button{cursor:pointer}.generator-card .history-link{display:inline-block}.history-card .description{margin:0 0 24px}.history-item .original{margin-top:8px;overflow-wrap:anywhere;color:var(--muted);font-size:11px}.history-item .meta{margin-top:8px;color:var(--muted);font-size:10px}.history-item>div{min-width:0;overflow-wrap:anywhere}.history-item a{color:var(--moss);font-size:13px;font-weight:700}.delete-btn{flex-shrink:0;padding:9px 13px;border:0;border-radius:8px;background:#F0EDFC;color:#5969D8;cursor:pointer}.delete-btn:hover{background:#D9DDF7}.short-url-result .generated-link a{overflow-wrap:anywhere}.short-url-result .copy-link-button{cursor:pointer}.generator-card form>input{margin-bottom:12px}
-@media(max-width:600px){.history-item{align-items:flex-start;flex-direction:column}.delete-btn{align-self:flex-end}}
+.hero-try-button {
+  cursor: pointer;
+}
+.generator-card form {
+  margin-top: 26px;
+}
+.generator-card form > button {
+  cursor: pointer;
+}
+.generator-card .history-link {
+  display: inline-block;
+}
+.history-card .description {
+  margin: 0 0 24px;
+}
+.history-item .original {
+  margin-top: 8px;
+  overflow-wrap: anywhere;
+  color: var(--muted);
+  font-size: 11px;
+}
+.history-item .meta {
+  margin-top: 8px;
+  color: var(--muted);
+  font-size: 10px;
+}
+.history-item > div {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.history-item a {
+  color: var(--moss);
+  font-size: 13px;
+  font-weight: 700;
+}
+.delete-btn {
+  flex-shrink: 0;
+  padding: 9px 13px;
+  border: 0;
+  border-radius: 8px;
+  background: #f0edfc;
+  color: #5969d8;
+  cursor: pointer;
+}
+.delete-btn:hover {
+  background: #d9ddf7;
+}
+.short-url-result .generated-link a {
+  overflow-wrap: anywhere;
+}
+.short-url-result .copy-link-button {
+  cursor: pointer;
+}
+.generator-card form > input {
+  margin-bottom: 12px;
+}
+@media (max-width: 600px) {
+  .history-item {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+  .delete-btn {
+    align-self: flex-end;
+  }
+}
