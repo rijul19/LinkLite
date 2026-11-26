@@ -1,12 +1,14 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import api from "../services/api";
+import useRefreshOnReturn from "../hooks/useRefreshOnReturn";
 import LinkAnalytics from "../components/LinkAnalytics";
 import { hostOf, mapLink, stripProtocol } from "../utils/links";
 
 export default function Analytics() {
   const [state, setState] = useState({ links: null, error: "" });
   const [picked, setPicked] = useState(null);
+  const tick = useRefreshOnReturn();
 
   useEffect(() => {
     let cancelled = false;
@@ -25,7 +27,7 @@ export default function Analytics() {
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [tick]);
 
   const { links, error } = state;
   const loading = links === null;

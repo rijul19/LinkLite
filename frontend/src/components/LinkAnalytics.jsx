@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import api from "../services/api";
+import useRefreshOnReturn from "../hooks/useRefreshOnReturn";
 import { hostOf, peakOf } from "../utils/links";
 import BarChart from "./BarChart";
 
@@ -19,6 +20,7 @@ export default function LinkAnalytics({ shortCode, totalClicks }) {
   const [days, setDays] = useState(14);
   const key = `${shortCode}:${days}`;
   const [state, setState] = useState({ key: null, data: null, error: "" });
+  const tick = useRefreshOnReturn();
 
   useEffect(() => {
     let cancelled = false;
@@ -41,7 +43,7 @@ export default function LinkAnalytics({ shortCode, totalClicks }) {
     return () => {
       cancelled = true;
     };
-  }, [shortCode, days, key]);
+  }, [shortCode, days, key, tick]);
 
   const loading = state.key !== key;
   const data = state.key === key ? state.data : null;

@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Routes, Route, Navigate, Outlet, useLocation } from "react-router-dom";
 import useUrlHistory from "./hooks/useUrlHistory";
 import useUrlValidation from "./hooks/useUrlValidation";
@@ -37,6 +37,7 @@ export default function App() {
   const [historyLoading, setHistoryLoading] = useState(false);
   const [historyError, setHistoryError] = useState("");
   const [reloadKey, setReloadKey] = useState(0);
+  const silentReload = useRef(false);
 
   useEffect(() => {
     if (isLoading) return;
@@ -52,7 +53,8 @@ export default function App() {
       }
 
       try {
-        setHistoryLoading(true);
+        if (!silentReload.current) setHistoryLoading(true);
+        silentReload.current = false;
         setHistoryError("");
 
         const response = await api.get(`/urls?page=${currentPage}&limit=10`);
@@ -85,6 +87,21 @@ export default function App() {
     // that should trigger a reload are listed here.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isAuthenticated, isLoading, currentPage, reloadKey]);
+
+  // Refresh counts when the user returns to this tab (clicks happen in another tab).
+  useEffect(() => {
+    if (!isAuthenticated) return;
+
+    const refresh = () => {
+      if (document.visibilityState === "visible") {
+        silentReload.current = true;
+        setReloadKey((key) => key + 1);
+      }
+    };
+
+    document.addEventListener("visibilitychange", refresh);
+    return () => document.removeEventListener("visibilitychange", refresh);
+  }, [isAuthenticated]);
 
   const create = (item) => {
     if (isAuthenticated) {
