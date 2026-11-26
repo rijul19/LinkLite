@@ -39,7 +39,18 @@ const urlSchema = new mongoose.Schema(
             }
         },
 
-        // Optional relationship with User model
+        // Optional expiration date for the short URL
+        expiresAt: {
+            type: Date,
+            default: null,
+            validate: {
+                validator: function (value) {
+                    return value === null || value > new Date();
+                },
+                message: "Expiration date must be in the future"
+            }
+        },
+
         // null means the URL was created by a guest
         user: {
             type: mongoose.Schema.Types.ObjectId,
@@ -55,12 +66,23 @@ const urlSchema = new mongoose.Schema(
     }
 );
 
-// Compound index for efficient user URL queries
+// Efficient user URL queries
 urlSchema.index({ user: 1, createdAt: -1 });
+
+// Find URLs by short code and expiration status
+urlSchema.index({ shortCode: 1, expiresAt: 1 });
 
 // Virtual: Generate short URL
 urlSchema.virtual("shortUrl").get(function () {
-    return `${process.env.BASE_URL}/${this.shortCode}`;
+    const baseUrl = process.env.BASE_URL || "http://localhost:5000";
+    return `${baseUrl}/${this.shortCode}`;
+});
+
+// Virtual: Check whether URL has expired
+urlSchema.virtual("isExpired").get(function () {
+    return this.expiresAt !== null &&
+        this.expiresAt !== undefined &&
+        this.expiresAt <= new Date();
 });
 
 module.exports = mongoose.model("Url", urlSchema);

@@ -2,8 +2,6 @@
 const express = require("express");
 const cors = require("cors");
 const helmet = require("helmet");
-// require("dotenv").config();
-
 const path = require("path");
 
 require("dotenv").config({
@@ -15,21 +13,34 @@ const connectDB = require("./config/db");
 const urlRoutes = require("./routes/urlRoutes");
 const authRoutes = require("./routes/authRoutes");
 
+const sanitizeInput = require("./middleware/sanitizeInput");
 const errorMiddleware = require("./middleware/errorMiddleware");
+
 const { redirectUrl } = require("./controllers/urlController");
 
 const app = express();
 
+// Security and request configuration
 app.use(helmet());
 app.use(cors());
-app.use(express.json());
 
+app.use(express.json({ limit: "100kb" }));
+app.use(express.urlencoded({
+    extended: false,
+    limit: "100kb"
+}));
+
+// Sanitize incoming request bodies
+app.use(sanitizeInput);
+
+// Welcome route
 app.get("/", (req, res) => {
     res.send("Welcome to LinkLite Backend!");
 });
 
+// Health check
 app.get("/api/health", (req, res) => {
-    res.json({
+    res.status(200).json({
         success: true,
         message: "LinkLite Backend is working!"
     });
@@ -41,22 +52,25 @@ app.use("/api/auth", authRoutes);
 // URL API routes
 app.use("/api/urls", urlRoutes);
 
-// Test error route - MUST be before /:code
+// Test error route
+// Keep before the short URL redirect route
 app.get("/test-error", (req, res, next) => {
     const error = new Error("This is a test error");
     error.statusCode = 400;
     next(error);
 });
 
-// Short URL redirect route - keep last
+// Short URL redirect route
+// Keep this route after all API routes
 app.get("/:code", redirectUrl);
 
-// Centralised error middleware - after all routes
+// Centralized error-handling middleware
+// Must remain after all routes
 app.use(errorMiddleware);
 
 const PORT = process.env.PORT || 5000;
 
-// Connect to MongoDB before starting the server
+// Connect to MongoDB before starting Express
 const startServer = async () => {
     try {
         await connectDB();
@@ -65,7 +79,11 @@ const startServer = async () => {
             console.log(`LinkLite server running on port ${PORT}`);
         });
     } catch (error) {
-        console.error("Failed to start server:", error.message);
+        console.error(
+            "Failed to start server:",
+            error.message
+        );
+
         process.exit(1);
     }
 };

@@ -1,9 +1,6 @@
+
 const mongoose = require("mongoose");
 
-// Clicks are stored in their own collection and reference the Url
-// (referencing), instead of being embedded as an array inside the Url
-// document. A popular link can get unlimited clicks, so an embedded array
-// would keep growing towards MongoDB's 16 MB document limit.
 const clickSchema = new mongoose.Schema(
     {
         url: {
@@ -11,20 +8,20 @@ const clickSchema = new mongoose.Schema(
             ref: "Url",
             required: true
         },
-
         shortCode: {
             type: String,
-            required: true
+            required: true,
+            trim: true
         },
-
         referrer: {
             type: String,
-            default: null
+            default: "Direct",
+            maxlength: 500
         },
-
         userAgent: {
             type: String,
-            default: null
+            default: "Unknown",
+            maxlength: 300
         }
     },
     {
@@ -32,10 +29,13 @@ const clickSchema = new mongoose.Schema(
     }
 );
 
-// "Clicks of one link within a date range"
-clickSchema.index({ url: 1, createdAt: -1 });
+// Automatically remove click records after one year.
+clickSchema.index(
+    { createdAt: 1 },
+    { expireAfterSeconds: 31536000 }
+);
 
-// TTL: old click records are removed automatically after 1 year
-clickSchema.index({ createdAt: 1 }, { expireAfterSeconds: 60 * 60 * 24 * 365 });
+// Improve URL-specific click history queries.
+clickSchema.index({ url: 1, createdAt: -1 });
 
 module.exports = mongoose.model("Click", clickSchema);
