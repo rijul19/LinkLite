@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useParams, Link } from "react-router-dom";
 import api from "../services/api";
+import useRefreshOnReturn from "../hooks/useRefreshOnReturn";
 import CopyButton from "../components/CopyButton";
 import LinkAnalytics from "../components/LinkAnalytics";
 import { ArrowIcon, ExternalIcon } from "../components/Icons";
@@ -9,6 +10,7 @@ import { expiryInfo, formatDate, stripProtocol } from "../utils/links";
 function UrlDetails() {
   const { shortCode } = useParams();
   const [state, setState] = useState({ code: null, url: null, error: "" });
+  const tick = useRefreshOnReturn();
 
   useEffect(() => {
     let cancelled = false;
@@ -31,7 +33,7 @@ function UrlDetails() {
     return () => {
       cancelled = true;
     };
-  }, [shortCode]);
+  }, [shortCode, tick]);
 
   const loading = state.code !== shortCode;
   const { url, error } = state;

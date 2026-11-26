@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import api from "../services/api";
+import useRefreshOnReturn from "../hooks/useRefreshOnReturn";
 import { useAuth } from "../context/AuthContext";
 import ShortenForm from "../components/ShortenForm";
 import CopyButton from "../components/CopyButton";
@@ -10,6 +11,7 @@ import { greeting, mapLink, stripProtocol } from "../utils/links";
 export default function Dashboard({ onCreate }) {
   const { user } = useAuth();
   const [refresh, setRefresh] = useState(0);
+  const tick = useRefreshOnReturn();
   const key = String(refresh);
   const [state, setState] = useState({ key: null, summary: null, recent: [], error: "" });
   const [exportError, setExportError] = useState("");
@@ -40,7 +42,7 @@ export default function Dashboard({ onCreate }) {
     return () => {
       cancelled = true;
     };
-  }, [key]);
+  }, [key, tick]);
 
   const loading = state.key !== key;
   const { summary, recent } = state;
